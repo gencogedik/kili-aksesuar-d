@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Cart = () => {
   const { state, dispatch } = useCart();
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { user } = useAuth();
 
   const updateQuantity = (id: string, quantity: number) => {
     dispatch({ type: 'UPDATE_QUANTITY', payload: { id, quantity } });
@@ -19,15 +20,6 @@ const Cart = () => {
 
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' });
-  };
-
-  const handleCheckout = () => {
-    setIsCheckingOut(true);
-    // Checkout işlemi burada yapılacak
-    setTimeout(() => {
-      alert('Ödeme sayfasına yönlendiriliyorsunuz...');
-      setIsCheckingOut(false);
-    }, 2000);
   };
 
   if (state.items.length === 0) {
@@ -158,13 +150,24 @@ const Cart = () => {
                 <span>{Math.round(state.total * 1.2).toLocaleString('tr-TR')}₺</span>
               </div>
 
-              <button
-                onClick={handleCheckout}
-                disabled={isCheckingOut}
-                className="w-full metallic-button text-white py-4 rounded-lg font-semibold text-lg hover:transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:transform-none"
-              >
-                {isCheckingOut ? 'İşleniyor...' : 'Ödemeye Geç'}
-              </button>
+              {user ? (
+                <Link
+                  to="/checkout"
+                  className="w-full metallic-button text-white py-4 rounded-lg font-semibold text-lg hover:transform hover:scale-105 transition-all duration-300 block text-center"
+                >
+                  Ödemeye Geç
+                </Link>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-sm text-gray-600 text-center">Satın almak için giriş yapın</p>
+                  <Link
+                    to="/auth"
+                    className="w-full metallic-button text-white py-4 rounded-lg font-semibold text-lg hover:transform hover:scale-105 transition-all duration-300 block text-center"
+                  >
+                    Giriş Yap
+                  </Link>
+                </div>
+              )}
 
               <div className="mt-6 space-y-3 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
