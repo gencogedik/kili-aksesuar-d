@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -52,15 +53,29 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				sidebar: {
-					DEFAULT: 'hsl(var(--sidebar-background))',
-					foreground: 'hsl(var(--sidebar-foreground))',
-					primary: 'hsl(var(--sidebar-primary))',
-					'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
-					accent: 'hsl(var(--sidebar-accent))',
-					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
-					border: 'hsl(var(--sidebar-border))',
-					ring: 'hsl(var(--sidebar-ring))'
+				carbon: {
+					50: '#f8f9fa',
+					100: '#e9ecef',
+					200: '#dee2e6',
+					300: '#ced4da',
+					400: '#adb5bd',
+					500: '#6c757d',
+					600: '#495057',
+					700: '#343a40',
+					800: '#212529',
+					900: '#1a1d21'
+				},
+				metallic: {
+					50: '#f8f9fa',
+					100: '#e8e9ea',
+					200: '#c4c6c8',
+					300: '#a1a4a7',
+					400: '#7e8285',
+					500: '#5b6064',
+					600: '#484c50',
+					700: '#36393c',
+					800: '#242628',
+					900: '#121314'
 				}
 			},
 			borderRadius: {
@@ -84,11 +99,26 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'float': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-10px)' }
+				},
+				'shine': {
+					'0%': { transform: 'translateX(-100%)' },
+					'100%': { transform: 'translateX(100%)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'float': 'float 3s ease-in-out infinite',
+				'shine': 'shine 2s ease-in-out infinite'
+			},
+			backgroundImage: {
+				'carbon-fiber': 'linear-gradient(45deg, #2a2a2a 25%, #1a1a1a 25%), linear-gradient(-45deg, #2a2a2a 25%, #1a1a1a 25%), linear-gradient(45deg, #1a1a1a 75%, #2a2a2a 75%), linear-gradient(-45deg, #1a1a1a 75%, #2a2a2a 75%)',
+				'metallic-gradient': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+				'metallic-shine': 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)'
 			}
 		}
 	},

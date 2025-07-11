@@ -1,0 +1,223 @@
+
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import Header from '@/components/Header';
+import ProductCard from '@/components/ProductCard';
+
+const CaseTypes = () => {
+  const [searchParams] = useSearchParams();
+  const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all');
+
+  const caseTypes = [
+    { id: 'all', name: 'Tüm Çeşitler', count: 150 },
+    { id: 'carbon-fiber', name: 'Carbon Fiber', count: 42 },
+    { id: 'saydam', name: 'Saydam', count: 35 },
+    { id: 'ozel-baski', name: 'Özel Baskı', count: 48 },
+    { id: 'karakter', name: 'Karakter', count: 25 }
+  ];
+
+  const mockProducts = [
+    {
+      id: '1',
+      name: 'Carbon Pro Elite',
+      price: 299,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 15',
+      caseType: 'Carbon Fiber',
+      rating: 4.8
+    },
+    {
+      id: '2',
+      name: 'Ultra Clear Pro',
+      price: 199,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 14',
+      caseType: 'Saydam',
+      rating: 4.6
+    },
+    {
+      id: '3',
+      name: 'Galaxy Dragon',
+      price: 399,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 13',
+      caseType: 'Özel Baskı',
+      rating: 4.9
+    },
+    {
+      id: '4',
+      name: 'Batman Dark Knight',
+      price: 349,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 12',
+      caseType: 'Karakter',
+      rating: 4.7
+    },
+    {
+      id: '5',
+      name: 'Carbon Weave',
+      price: 259,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 15',
+      caseType: 'Carbon Fiber',
+      rating: 4.5
+    },
+    {
+      id: '6',
+      name: 'Crystal Defense',
+      price: 189,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 13',
+      caseType: 'Saydam',
+      rating: 4.4
+    },
+    {
+      id: '7',
+      name: 'Cosmic Nebula',
+      price: 329,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 14',
+      caseType: 'Özel Baskı',
+      rating: 4.6
+    },
+    {
+      id: '8',
+      name: 'Spider-Man Web',
+      price: 369,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 15',
+      caseType: 'Karakter',
+      rating: 4.8
+    },
+    {
+      id: '9',
+      name: 'Marble Luxury',
+      price: 279,
+      image: '/placeholder.svg',
+      phoneModel: 'iPhone 12',
+      caseType: 'Özel Baskı',
+      rating: 4.7
+    }
+  ];
+
+  const filteredProducts = selectedType === 'all' 
+    ? mockProducts 
+    : mockProducts.filter(product => 
+        product.caseType.toLowerCase().replace(' ', '-') === selectedType ||
+        (selectedType === 'ozel-baski' && product.caseType === 'Özel Baskı')
+      );
+
+  useEffect(() => {
+    const type = searchParams.get('type');
+    if (type) {
+      setSelectedType(type);
+    }
+  }, [searchParams]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-metallic-800 mb-4">Kılıf Çeşitleri</h1>
+          <p className="text-gray-600">Tarzınıza uygun kılıfı bulun</p>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="lg:w-1/4">
+            <div className="bg-white rounded-lg shadow-lg p-6 sticky top-24">
+              <h3 className="text-lg font-semibold text-metallic-800 mb-4">Kılıf Tipi Seç</h3>
+              <div className="space-y-2">
+                {caseTypes.map((type) => (
+                  <button
+                    key={type.id}
+                    onClick={() => setSelectedType(type.id)}
+                    className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
+                      selectedType === type.id
+                        ? 'bg-gradient-to-r from-metallic-600 to-metallic-700 text-white'
+                        : 'hover:bg-metallic-50 text-gray-700'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">{type.name}</span>
+                      <span className={`text-sm ${
+                        selectedType === type.id ? 'text-metallic-200' : 'text-gray-500'
+                      }`}>
+                        ({type.count})
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Filters */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="font-semibold text-metallic-800 mb-3">Fiyat Aralığı</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">100₺ - 200₺</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">200₺ - 300₺</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">300₺ ve üzeri</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="font-semibold text-metallic-800 mb-3">Değerlendirme</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">4+ Yıldız</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">4.5+ Yıldız</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="lg:w-3/4">
+            <div className="flex justify-between items-center mb-6">
+              <p className="text-gray-600">
+                {filteredProducts.length} ürün bulundu
+              </p>
+              <select className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-metallic-500 focus:border-transparent">
+                <option>Fiyat: Düşükten Yükseğe</option>
+                <option>Fiyat: Yüksekten Düşüğe</option>
+                <option>En Popüler</option>
+                <option>En Yeni</option>
+                <option>En İyi Puan</option>
+              </select>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">Bu kategoride henüz ürün bulunmuyor.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CaseTypes;
