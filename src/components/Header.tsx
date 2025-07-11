@@ -28,7 +28,7 @@ const Header = () => {
             <div className="w-10 h-10 metallic-gradient rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">K</span>
             </div>
-            <span className="text-xl font-bold text-metallic-800">Kılıf Store</span>
+            <span className="text-xl font-bold text-metallic-800">SHUFFLE CASE</span>
           </Link>
 
           {/* Desktop Navigation */}
