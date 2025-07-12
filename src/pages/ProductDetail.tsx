@@ -18,7 +18,7 @@ const ProductDetail = () => {
   name: 'Carbon Pro Elite',
   price: 299,
   originalPrice: 399,
-  images: ['/SAM_1545.JPG', '/SAM_1545.JPG', '/SAM_1545.JPG'],
+  images: ['/SAM_1568.JPG', '/SAM_1568.JPG', '/SAM_1568.JPG'],
   caseType: 'Carbon Fiber',
   rating: 4.8,
   reviewCount: 124,
