@@ -14,26 +14,26 @@ const ProductDetail = () => {
 
   // Mock product data
   const product = {
-    id: id || '1',
-    name: 'Carbon Pro Elite',
-    price: 299,
-    originalPrice: 399,
-    images: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg'],
-    caseType: 'Carbon Fiber',
-    rating: 4.8,
-    reviewCount: 124,
-    description: 'Premium carbon fiber kılıf, maksimum koruma ve şık tasarım. Darbe emici teknoloji ile telefonunuzu günlük kullanımda korur.',
-    features: [
-      'Gerçek carbon fiber malzeme',
-      'Düşme koruması sertifikalı',
-      'Kablosuz şarj uyumlu',
-      'Ultra ince tasarım',
-      'Anti-parmak izi kaplama'
-    ],
-    compatiblePhones: ['iPhone 15', 'iPhone 15 Plus', 'iPhone 15 Pro', 'iPhone 15 Pro Max'],
-    inStock: true,
-    stockCount: 15
-  };
+  id: id || '1',
+  name: 'Carbon Pro Elite',
+  price: 299,
+  originalPrice: 399,
+  images: ['/SAM_1545.JPG', '/SAM_1545.JPG', '/SAM_1545.JPG'],
+  caseType: 'Carbon Fiber',
+  rating: 4.8,
+  reviewCount: 124,
+  description: 'Premium carbon fiber kılıf, maksimum koruma ve şık tasarım. Darbe emici teknoloji ile telefonunuzu günlük kullanımda korur.',
+  features: [
+    'Gerçek carbon fiber malzeme',
+    'Düşme koruması sertifikalı',
+    'Kablosuz şarj uyumlu',
+    'Ultra ince tasarım',
+    'Anti-parmak izi kaplama'
+  ],
+  compatiblePhones: ['iPhone 15', 'iPhone 15 Plus', 'iPhone 15 Pro', 'iPhone 15 Pro Max'],
+  inStock: true,
+  stockCount: 15
+};
 
   const handleAddToCart = () => {
     if (!selectedPhone) {
