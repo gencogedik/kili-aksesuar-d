@@ -1,66 +1,11 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
+import { supabase } from '@/integrations/supabase/client';
 import { ShoppingCart, Star, Shield, Truck } from 'lucide-react';
 
 const Index = () => {
-  const featuredProducts = [
-    {
-      id: '1',
-      name: 'Carbon Fiber Pro',
-      price: 299,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 15',
-      caseType: 'Carbon Fiber',
-      rating: 4.8
-    },
-    {
-      id: '2',
-      name: 'Crystal Clear',
-      price: 199,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 14',
-      caseType: 'Saydam',
-      rating: 4.6
-    },
-    {
-      id: '3',
-      name: 'Dragon Design',
-      price: 399,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 13',
-      caseType: 'Özel Baskı',
-      rating: 4.9
-    },
-    {
-      id: '4',
-      name: 'Batman Edition',
-      price: 349,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 12',
-      caseType: 'Karakter',
-      rating: 4.7
-    },
-    {
-      id: '5',
-      name: 'Metallic Shield',
-      price: 259,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 15',
-      caseType: 'Carbon Fiber',
-      rating: 4.5
-    },
-    {
-      id: '6',
-      name: 'Gradient Pro',
-      price: 229,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 14',
-      caseType: 'Özel Baskı',
-      rating: 4.8
-    }
-  ];
+  const [products, setProducts] = useState([]);
 
   const features = [
     {
@@ -80,10 +25,28 @@ const Index = () => {
     }
   ];
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true)
+        .limit(6); // Öne çıkan ürünler için 6 ürün getir
+
+      if (error) {
+        console.error('Supabase error:', error);
+      } else {
+        setProducts(data);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-metallic-800/10 to-transparent"></div>
@@ -129,11 +92,11 @@ const Index = () => {
         <div className="container mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12 text-metallic-800">Öne Çıkan Ürünler</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product) => (
+            {products.map((product) => (
               <div key={product.id} className="product-card relative group">
                 <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
                   <img 
-                    src={product.image} 
+                    src={product.image_url} 
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -144,13 +107,13 @@ const Index = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star 
                         key={i} 
-                        className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+                        className={`w-4 h-4 ${i < Math.floor(product.rating || 4.5) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
                       />
                     ))}
-                    <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
+                    <span className="text-sm text-gray-600 ml-2">({product.rating || 4.5})</span>
                   </div>
                   <h3 className="text-xl font-semibold mb-2 text-metallic-800">{product.name}</h3>
-                  <p className="text-gray-600 text-sm mb-2">{product.phoneModel} • {product.caseType}</p>
+                  <p className="text-gray-600 text-sm mb-2">{product.phone_model} • {product.case_type}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-metallic-800">{product.price}₺</span>
                     <Link 
