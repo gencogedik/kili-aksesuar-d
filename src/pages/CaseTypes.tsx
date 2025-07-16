@@ -16,89 +16,32 @@ const CaseTypes = () => {
     { id: 'ozel-baski', name: 'Özel Baskı', count: 48 },
     { id: 'karakter', name: 'Karakter', count: 25 }
   ];
+const [products, setProducts] = useState([]);
 
-  const mockProducts = [
-    {
-      id: '1',
-      name: 'Carbon Pro Elite',
-      price: 299,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 15',
-      caseType: 'Carbon Fiber',
-      rating: 4.8
-    },
-    {
-      id: '2',
-      name: 'Ultra Clear Pro',
-      price: 199,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 14',
-      caseType: 'Saydam',
-      rating: 4.6
-    },
-    {
-      id: '3',
-      name: 'Galaxy Dragon',
-      price: 399,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 13',
-      caseType: 'Özel Baskı',
-      rating: 4.9
-    },
-    {
-      id: '4',
-      name: 'Batman Dark Knight',
-      price: 349,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 12',
-      caseType: 'Karakter',
-      rating: 4.7
-    },
-    {
-      id: '5',
-      name: 'Carbon Weave',
-      price: 259,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 15',
-      caseType: 'Carbon Fiber',
-      rating: 4.5
-    },
-    {
-      id: '6',
-      name: 'Crystal Defense',
-      price: 189,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 13',
-      caseType: 'Saydam',
-      rating: 4.4
-    },
-    {
-      id: '7',
-      name: 'Cosmic Nebula',
-      price: 329,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 14',
-      caseType: 'Özel Baskı',
-      rating: 4.6
-    },
-    {
-      id: '8',
-      name: 'Spider-Man Web',
-      price: 369,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 15',
-      caseType: 'Karakter',
-      rating: 4.8
-    },
-    {
-      id: '9',
-      name: 'Marble Luxury',
-      price: 279,
-      image: '/placeholder.svg',
-      phoneModel: 'iPhone 12',
-      caseType: 'Özel Baskı',
-      rating: 4.7
+useEffect(() => {
+  const fetchProducts = async () => {
+    const { data, error } = await supabase
+      .from('products')
+      .select('*')
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('Supabase error:', error);
+    } else {
+      setProducts(data);
     }
+  };
+
+  fetchProducts();
+}, []);
+
+const filteredProducts = selectedType === 'all'
+  ? products
+  : products.filter(product =>
+      product.case_type?.toLowerCase().replace(/\s/g, '-') === selectedType
+    );
+
+
   ];
 
   const filteredProducts = selectedType === 'all' 
