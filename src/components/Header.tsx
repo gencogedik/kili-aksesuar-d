@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Menu, X, ShoppingCart, User, Settings, LogOut } from 'lucide-react';
@@ -25,9 +24,11 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="w-10 h-10 metallic-gradient rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">K</span>
-            </div>
+            <img
+              src="/logo.png"
+              alt="Shuffle Case Logo"
+              className="w-10 h-10 rounded-lg object-cover"
+            />
             <span className="text-xl font-bold text-metallic-800">SHUFFLE CASE</span>
           </Link>
 
