@@ -95,5 +95,62 @@ const CaseTypes = () => {
                   </label>
                   <label className="flex items-center">
                     <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">200
+                    <span className="text-sm">200₺ - 300₺</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">300₺ ve üzeri</span>
+                  </label>
+                </div>
+              </div>
 
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <h4 className="font-semibold text-metallic-800 mb-3">Değerlendirme</h4>
+                <div className="space-y-2">
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">4+ Yıldız</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" className="mr-2" />
+                    <span className="text-sm">4.5+ Yıldız</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Products Grid */}
+          <div className="lg:w-3/4">
+            <div className="flex justify-between items-center mb-6">
+              <p className="text-gray-600">
+                {filteredProducts.length} ürün bulundu
+              </p>
+              <select className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-metallic-500 focus:border-transparent">
+                <option>Fiyat: Düşükten Yükseğe</option>
+                <option>Fiyat: Yüksekten Düşüğe</option>
+                <option>En Popüler</option>
+                <option>En Yeni</option>
+                <option>En İyi Puan</option>
+              </select>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+
+            {filteredProducts.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">Bu kategoride henüz ürün bulunmuyor.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CaseTypes;
