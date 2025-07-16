@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -8,6 +7,7 @@ import ProductCard from '@/components/ProductCard';
 const CaseTypes = () => {
   const [searchParams] = useSearchParams();
   const [selectedType, setSelectedType] = useState(searchParams.get('type') || 'all');
+  const [products, setProducts] = useState([]);
 
   const caseTypes = [
     { id: 'all', name: 'Tüm Çeşitler', count: 150 },
@@ -16,40 +16,23 @@ const CaseTypes = () => {
     { id: 'ozel-baski', name: 'Özel Baskı', count: 48 },
     { id: 'karakter', name: 'Karakter', count: 25 }
   ];
-const [products, setProducts] = useState([]);
 
-useEffect(() => {
-  const fetchProducts = async () => {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('is_active', true);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .eq('is_active', true);
 
-    if (error) {
-      console.error('Supabase error:', error);
-    } else {
-      setProducts(data);
-    }
-  };
+      if (error) {
+        console.error('Supabase error:', error);
+      } else {
+        setProducts(data);
+      }
+    };
 
-  fetchProducts();
-}, []);
-
-const filteredProducts = selectedType === 'all'
-  ? products
-  : products.filter(product =>
-      product.case_type?.toLowerCase().replace(/\s/g, '-') === selectedType
-    );
-
-
-  ];
-
-  const filteredProducts = selectedType === 'all' 
-    ? mockProducts 
-    : mockProducts.filter(product => 
-        product.caseType.toLowerCase().replace(' ', '-') === selectedType ||
-        (selectedType === 'ozel-baski' && product.caseType === 'Özel Baskı')
-      );
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const type = searchParams.get('type');
@@ -58,10 +41,16 @@ const filteredProducts = selectedType === 'all'
     }
   }, [searchParams]);
 
+  const filteredProducts = selectedType === 'all'
+    ? products
+    : products.filter(product =>
+        product.case_type?.toLowerCase().replace(/\s/g, '-') === selectedType
+      );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-metallic-800 mb-4">Kılıf Çeşitleri</h1>
@@ -106,62 +95,5 @@ const filteredProducts = selectedType === 'all'
                   </label>
                   <label className="flex items-center">
                     <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">200₺ - 300₺</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">300₺ ve üzeri</span>
-                  </label>
-                </div>
-              </div>
+                    <span className="text-sm">200
 
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="font-semibold text-metallic-800 mb-3">Değerlendirme</h4>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">4+ Yıldız</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input type="checkbox" className="mr-2" />
-                    <span className="text-sm">4.5+ Yıldız</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Products Grid */}
-          <div className="lg:w-3/4">
-            <div className="flex justify-between items-center mb-6">
-              <p className="text-gray-600">
-                {filteredProducts.length} ürün bulundu
-              </p>
-              <select className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-metallic-500 focus:border-transparent">
-                <option>Fiyat: Düşükten Yükseğe</option>
-                <option>Fiyat: Yüksekten Düşüğe</option>
-                <option>En Popüler</option>
-                <option>En Yeni</option>
-                <option>En İyi Puan</option>
-              </select>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </div>
-
-            {filteredProducts.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500 text-lg">Bu kategoride henüz ürün bulunmuyor.</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default CaseTypes;
