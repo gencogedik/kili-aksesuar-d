@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ShoppingCart } from 'lucide-react';
@@ -8,7 +7,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  image: string;
+  image?: string; // opsiyonel hale getirdik
   phoneModel: string;
   caseType: string;
   rating: number;
@@ -36,12 +35,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     });
   };
 
+  // Ürün adını dosya adına çeviriyoruz (boşluklara dikkat)
+  const formattedName = product.name.trim(); // örn: "Carbon Pro Elit"
+  const imagePath = `/` + formattedName + `.jpg`; // örn: "/Carbon Pro Elit.jpg"
+
   return (
     <div className="product-card relative group">
       <Link to={`/product/${product.id}`}>
         <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
           <img 
-            src={product.image} 
+            src={imagePath}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
