@@ -7,7 +7,7 @@ interface Product {
   id: string;
   name: string;
   price: number;
-  image?: string; // opsiyonel hale getirdik
+  image?: string;
   phoneModel: string;
   caseType: string;
   rating: number;
@@ -16,6 +16,20 @@ interface Product {
 interface ProductCardProps {
   product: Product;
 }
+
+// Türkçe karakterleri sadeleştiren yardımcı fonksiyon
+const normalizeFileName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .replace(/ç/g, 'c')
+    .replace(/ğ/g, 'g')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ş/g, 's')
+    .replace(/ü/g, 'u')
+    .replace(/\s+/g, '-')       // boşlukları - ile değiştir
+    .replace(/[^\w\-]/g, '')    // harf, rakam ve tire dışındaki karakterleri kaldır
+};
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { dispatch } = useCart();
@@ -35,16 +49,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     });
   };
 
-  // Ürün adını dosya adına çeviriyoruz (boşluklara dikkat)
-  const formattedName = product.name.trim(); // örn: "Carbon Pro Elit"
-  const imagePath = `/` + formattedName + `.jpg`; // örn: "/Carbon Pro Elit.jpg"
+  const imageFile = product.image || `/${normalizeFileName(product.name)}.jpg`;
 
   return (
     <div className="product-card relative group">
       <Link to={`/product/${product.id}`}>
         <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
           <img 
-            src={imagePath}
+            src={imageFile}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />
