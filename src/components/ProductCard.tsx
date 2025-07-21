@@ -17,7 +17,7 @@ interface ProductCardProps {
   product: Product;
 }
 
-// Türkçe karakterleri sadeleştiren yardımcı fonksiyon
+// Türkçe karakterleri sadeleştiren ve dosya adına dönüştüren yardımcı fonksiyon
 const normalizeFileName = (name: string): string => {
   return name
     .toLowerCase()
@@ -31,6 +31,15 @@ const normalizeFileName = (name: string): string => {
     .replace(/[^\w\-]/g, '')    // harf, rakam ve tire dışındaki karakterleri kaldır
 };
 
+// Otomatik resim yolu çözümleyici
+const getImagePath = (product: Product): string => {
+  if (product.image?.startsWith('http')) {
+    return product.image; // Supabase veya tam URL varsa direkt kullan
+  }
+  // Yerel dosya varsayımı
+  return `/images/${normalizeFileName(product.name)}.jpg`;
+};
+
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { dispatch } = useCart();
 
@@ -42,14 +51,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: getImagePath(product),
         phoneModel: product.phoneModel,
         caseType: product.caseType
       }
     });
   };
 
-  const imageFile = product.image || `/${normalizeFileName(product.name)}.jpg`;
+  const imageFile = getImagePath(product);
 
   return (
     <div className="product-card relative group">
