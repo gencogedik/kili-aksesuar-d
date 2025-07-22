@@ -10,11 +10,11 @@ const CaseTypes = () => {
   const [products, setProducts] = useState([]);
 
   const caseTypes = [
-    { id: 'all', name: 'Tüm Çeşitler', count: 150 },
-    { id: 'carbon-fiber', name: 'Carbon Fiber', count: 42 },
-    { id: 'saydam', name: 'Saydam', count: 35 },
-    { id: 'ozel-baski', name: 'Özel Baskı', count: 48 },
-    { id: 'karakter', name: 'Karakter', count: 25 }
+    { id: 'all', name: 'Tüm Çeşitler', count: 10 },
+    { id: 'carbon-fiber', name: 'Carbon Fiber', count: 2 },
+    { id: 'saydam', name: 'Saydam', count: 3 },
+    { id: 'ozel-baski', name: 'Özel Baskı', count: 8 },
+    { id: 'karakter', name: 'Karakter', count: 2 }
   ];
 
   useEffect(() => {
