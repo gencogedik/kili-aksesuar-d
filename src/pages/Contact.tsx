@@ -154,7 +154,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-metallic-800">Telefon</h4>
-                    <p className="text-gray-600">+90 (212) 555 0123</p>
+                    <p className="text-gray-600">+90 (541) 192 5206</p>
                     <p className="text-sm text-gray-500 mt-1">Pazartesi - Cuma: 09:00 - 18:00</p>
                   </div>
                 </div>
@@ -165,8 +165,8 @@ const Contact = () => {
                   </div>
                   <div>
                     <h4 className="font-semibold text-metallic-800">E-posta</h4>
-                    <p className="text-gray-600">info@phonecasepro.com</p>
-                    <p className="text-gray-600">destek@phonecasepro.com</p>
+                    <p className="text-gray-600">shufflekap@gmail.com</p>
+                    <p className="text-gray-600">gedikgenco@gmail.com</p>
                   </div>
                 </div>
 
@@ -177,9 +177,9 @@ const Contact = () => {
                   <div>
                     <h4 className="font-semibold text-metallic-800">Adres</h4>
                     <p className="text-gray-600">
-                      Atatürk Mahallesi<br />
-                      Cumhuriyet Caddesi No: 123<br />
-                      Şişli / İstanbul
+                      Final Dershanesi çaprazı<br />
+                      Dr. Ali Menteşoğlu Caddesi No: 4<br />
+                      Seyhan / Adana
                     </p>
                   </div>
                 </div>
