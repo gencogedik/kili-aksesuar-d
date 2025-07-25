@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useSearchParams } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
 
 const slugify = (text: string) =>
-  text
+  (text || "")
+    .toString()
     .toLowerCase()
-    .normalize("NFD")
+    .normalize?.("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
@@ -16,7 +17,7 @@ const slugify = (text: string) =>
 const CaseTypesPage = () => {
   const supabase = createClient();
   const searchParams = useSearchParams();
-  const selectedModel = searchParams.get("model"); // örn. iphone-11
+  const selectedModel = searchParams.get("model"); // örn: iphone-11
 
   const [products, setProducts] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
@@ -24,20 +25,20 @@ const CaseTypesPage = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       const { data, error } = await supabase.from("products").select("*");
+
       if (error) {
-        console.error("Ürünler alınamadı:", error.message);
+        console.error("Ürünleri alma hatası:", error.message);
         return;
       }
 
-      // Filtre burada, selectedModel geldikten sonra
       const filteredData = selectedModel
-        ? data.filter(
-            (product) =>
-              Array.isArray(product.phoneModels) &&
-              product.phoneModels.some(
-                (m) => slugify(m ?? "") === selectedModel.toLowerCase()
-              )
-          )
+        ? data.filter((product) => {
+            if (!Array.isArray(product.phoneModels)) return false;
+
+            return product.phoneModels.some(
+              (model) => slugify(model) === selectedModel.toLowerCase()
+            );
+          })
         : data;
 
       setProducts(data);
@@ -45,7 +46,7 @@ const CaseTypesPage = () => {
     };
 
     fetchProducts();
-  }, [selectedModel]); // 🔁 Model değiştiğinde tekrar çalış
+  }, [selectedModel]);
 
   return (
     <div className="min-h-screen bg-gray-100 py-10">
@@ -68,3 +69,4 @@ const CaseTypesPage = () => {
 };
 
 export default CaseTypesPage;
+
