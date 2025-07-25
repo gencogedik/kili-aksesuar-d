@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
+import Header from "@/components/Header"; // ✅ Geri eklendi
+import { Slider } from "@/components/ui/slider"; // Örnek fiyat filtresi için varsayım
 
 const slugify = (text: string) =>
   (text || "")
@@ -16,9 +18,12 @@ const slugify = (text: string) =>
 
 const CaseTypesPage = () => {
   const [searchParams] = useSearchParams();
-  const selectedModel = searchParams.get("model"); // Örn: iphone-11
+  const selectedModel = searchParams.get("model");
 
+  const [products, setProducts] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
+  const [selectedCaseType, setSelectedCaseType] = useState<string | null>(null);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -29,28 +34,88 @@ const CaseTypesPage = () => {
         return;
       }
 
-      const filteredData = selectedModel
-        ? data.filter((product) => {
-            if (!Array.isArray(product.phoneModels)) return false;
-
-            return product.phoneModels.some(
-              (model) => slugify(model) === selectedModel.toLowerCase()
-            );
-          })
-        : data;
-
-      setFiltered(filteredData);
+      setProducts(data);
     };
 
     fetchProducts();
-  }, [selectedModel]);
+  }, []);
+
+  useEffect(() => {
+    let data = [...products];
+
+    if (selectedModel) {
+      data = data.filter((product) =>
+        Array.isArray(product.phoneModels)
+          ? product.phoneModels.some(
+              (model) => slugify(model) === selectedModel.toLowerCase()
+            )
+          : false
+      );
+    }
+
+    if (selectedCaseType) {
+      data = data.filter((product) => product.caseType === selectedCaseType);
+    }
+
+    if (priceRange) {
+      data = data.filter(
+        (product) =>
+          product.price >= priceRange[0] && product.price <= priceRange[1]
+      );
+    }
+
+    setFiltered(data);
+  }, [products, selectedModel, selectedCaseType, priceRange]);
 
   return (
-    <div className="min-h-screen bg-gray-100 py-10">
-      <div className="container mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center text-metallic-800 mb-10">
+    <div className="min-h-screen bg-gray-100">
+      <Header /> {/* ✅ Üstteki navigasyon */}
+      <div className="container mx-auto px-4 py-10">
+        <h1 className="text-3xl font-bold text-metallic-800 mb-6 text-center">
           Kılıf Modelleri
         </h1>
+
+        {/* ✅ Filtreler */}
+        <div className="flex flex-wrap items-center gap-4 mb-8 justify-center">
+          <button
+            onClick={() => setSelectedCaseType(null)}
+            className={`px-4 py-2 rounded ${
+              !selectedCaseType ? "bg-metallic-800 text-white" : "bg-white"
+            }`}
+          >
+            Hepsi
+          </button>
+          <button
+            onClick={() => setSelectedCaseType("Şeffaf")}
+            className={`px-4 py-2 rounded ${
+              selectedCaseType === "Şeffaf" ? "bg-metallic-800 text-white" : "bg-white"
+            }`}
+          >
+            Şeffaf
+          </button>
+          <button
+            onClick={() => setSelectedCaseType("Desenli")}
+            className={`px-4 py-2 rounded ${
+              selectedCaseType === "Desenli" ? "bg-metallic-800 text-white" : "bg-white"
+            }`}
+          >
+            Desenli
+          </button>
+        </div>
+
+        {/* ✅ Fiyat Aralığı Slider (örnek) */}
+        <div className="mb-8 max-w-md mx-auto">
+          <p className="text-center mb-2">Fiyat Aralığı: {priceRange[0]}₺ - {priceRange[1]}₺</p>
+          <Slider
+            min={0}
+            max={1000}
+            step={10}
+            defaultValue={[0, 1000]}
+            onValueChange={(values) => setPriceRange([values[0], values[1]])}
+          />
+        </div>
+
+        {/* ✅ Ürünler */}
         {filtered.length === 0 ? (
           <p className="text-center text-gray-600">Uygun ürün bulunamadı.</p>
         ) : (
