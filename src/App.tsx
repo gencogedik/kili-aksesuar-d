@@ -30,6 +30,7 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/" element={<Index />} />
               <Route path="/phone-models" element={<PhoneModels />} />
               <Route path="/case-types" element={<CaseTypes />} />
