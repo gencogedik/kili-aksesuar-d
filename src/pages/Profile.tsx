@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,9 +73,11 @@ const Profile = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-metallic-600"></div>
-    </div>;
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-metallic-600"></div>
+      </div>
+    );
   }
 
   if (!user) return null;
@@ -84,11 +85,11 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center gap-4 mb-8">
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="inline-flex items-center gap-2 text-metallic-600 hover:text-metallic-800 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -108,16 +109,20 @@ const Profile = () => {
               </div>
 
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start gap-3">
-                  <Package className="w-4 h-4" />
-                  Siparişlerim
-                </Button>
-                <Button variant="outline" className="w-full justify-start gap-3">
-                  <MapPin className="w-4 h-4" />
-                  Adreslerim
-                </Button>
-                <Button 
-                  variant="destructive" 
+                <Link to="/profile/orders">
+                  <Button variant="outline" className="w-full justify-start gap-3">
+                    <Package className="w-4 h-4" />
+                    Siparişlerim
+                  </Button>
+                </Link>
+                <Link to="/profile/addresses">
+                  <Button variant="outline" className="w-full justify-start gap-3">
+                    <MapPin className="w-4 h-4" />
+                    Adreslerim
+                  </Button>
+                </Link>
+                <Button
+                  variant="destructive"
                   className="w-full justify-start gap-3"
                   onClick={handleSignOut}
                 >
@@ -143,9 +148,7 @@ const Profile = () => {
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Henüz siparişiniz yok</h3>
                   <p className="text-gray-500 mb-6">İlk siparişinizi vermek için alışverişe başlayın!</p>
                   <Link to="/case-types">
-                    <Button className="metallic-button text-white">
-                      Alışverişe Başla
-                    </Button>
+                    <Button className="metallic-button text-white">Alışverişe Başla</Button>
                   </Link>
                 </div>
               ) : (
@@ -154,24 +157,23 @@ const Profile = () => {
                     <div key={order.id} className="border border-gray-200 rounded-lg p-6">
                       <div className="flex items-center justify-between mb-4">
                         <div>
-                          <h3 className="font-semibold text-metallic-800">
-                            Sipariş #{order.order_number}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {new Date(order.created_at).toLocaleDateString('tr-TR')}
-                          </p>
+                          <h3 className="font-semibold text-metallic-800">Sipariş #{order.order_number}</h3>
+                          <p className="text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString('tr-TR')}</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-bold text-lg text-metallic-800">
-                            {order.total_amount.toLocaleString('tr-TR')}₺
-                          </p>
+                          <p className="font-bold text-lg text-metallic-800">{order.total_amount.toLocaleString('tr-TR')}₺</p>
                           <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
+                            order.status === 'pending'
+                              ? 'bg-yellow-100 text-yellow-800'
+                              : order.status === 'completed'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-gray-100 text-gray-800'
                           }`}>
-                            {order.status === 'pending' ? 'Hazırlanıyor' :
-                             order.status === 'completed' ? 'Tamamlandı' : order.status}
+                            {order.status === 'pending'
+                              ? 'Hazırlanıyor'
+                              : order.status === 'completed'
+                              ? 'Tamamlandı'
+                              : order.status}
                           </span>
                         </div>
                       </div>
@@ -181,15 +183,11 @@ const Profile = () => {
                           <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded">
                             <div>
                               <p className="font-medium text-metallic-800">{item.product_name}</p>
-                              <p className="text-sm text-gray-600">
-                                {item.phone_model} • {item.case_type}
-                              </p>
+                              <p className="text-sm text-gray-600">{item.phone_model} • {item.case_type}</p>
                             </div>
                             <div className="text-right">
                               <p className="font-semibold">{item.quantity} adet</p>
-                              <p className="text-sm text-gray-600">
-                                {item.price.toLocaleString('tr-TR')}₺
-                              </p>
+                              <p className="text-sm text-gray-600">{item.price.toLocaleString('tr-TR')}₺</p>
                             </div>
                           </div>
                         ))}
