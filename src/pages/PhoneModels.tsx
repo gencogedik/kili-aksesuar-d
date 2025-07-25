@@ -20,6 +20,14 @@ const phoneModels = [
   'iPhone 11'
 ];
 
+// ✅ Slugify fonksiyonu: Türkçe karakter desteği + boşlukları kaldırır
+const slugify = (text: string) =>
+  text
+    .toLowerCase()
+    .normalize('NFD') // Türkçe karakterleri çözer
+    .replace(/[\u0300-\u036f]/g, '') // aksanları kaldırır
+    .replace(/\s+/g, '-'); // boşlukları - yap
+
 const PhoneModels = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -34,7 +42,7 @@ const PhoneModels = () => {
           {phoneModels.map((model) => (
             <Link
               key={model}
-              to={`/case-types?model=${model.toLowerCase().replace(/\s+/g, '-')}`}
+              to={`/case-types?model=${slugify(model)}`}
               className="block p-6 bg-white rounded-xl shadow hover:shadow-lg transition-shadow border border-gray-200 hover:border-metallic-400"
             >
               <h2 className="text-lg font-semibold text-metallic-800">{model}</h2>
