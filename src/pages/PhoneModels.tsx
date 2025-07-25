@@ -20,13 +20,13 @@ const phoneModels = [
   'iPhone 11'
 ];
 
-// ✅ Slugify fonksiyonu: Türkçe karakter desteği + boşlukları kaldırır
+// ✅ Aynı slugify fonksiyonu case-types.tsx'deki filtreleme ile UYUMLU
 const slugify = (text: string) =>
   text
     .toLowerCase()
-    .normalize('NFD') // Türkçe karakterleri çözer
-    .replace(/[\u0300-\u036f]/g, '') // aksanları kaldırır
-    .replace(/\s+/g, '-'); // boşlukları - yap
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // Türkçe karakterleri kaldır
+    .replace(/\s+/g, "-"); // boşlukları tire yap
 
 const PhoneModels = () => {
   return (
