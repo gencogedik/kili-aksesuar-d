@@ -1,5 +1,7 @@
+// src/App.tsx
 
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import AuthCallback from "./pages/AuthCallback"; // ✅ Yeni eklenen sayfa
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,7 +32,6 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/" element={<Index />} />
               <Route path="/phone-models" element={<PhoneModels />} />
               <Route path="/case-types" element={<CaseTypes />} />
@@ -39,6 +40,8 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/auth/callback" element={<AuthCallback />} /> {/* ✅ Burası eklendi */}
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
