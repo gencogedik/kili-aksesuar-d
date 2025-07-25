@@ -1,25 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useSearchParams } from 'react-router-dom';
 import ProductCard from "@/components/ProductCard";
 
 const slugify = (text: string) =>
   (text || "")
     .toString()
     .toLowerCase()
-    .normalize?.("NFD")
+    .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
 const CaseTypesPage = () => {
-  const supabase = createClient();
-  const searchParams = useSearchParams();
-  const selectedModel = searchParams.get("model"); // örn: iphone-11
+  const [searchParams] = useSearchParams();
+  const selectedModel = searchParams.get("model"); // Örn: iphone-11
 
-  const [products, setProducts] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
 
   useEffect(() => {
@@ -41,7 +39,6 @@ const CaseTypesPage = () => {
           })
         : data;
 
-      setProducts(data);
       setFiltered(filteredData);
     };
 
@@ -69,4 +66,3 @@ const CaseTypesPage = () => {
 };
 
 export default CaseTypesPage;
-
