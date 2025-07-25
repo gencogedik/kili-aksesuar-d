@@ -10,7 +10,7 @@ interface Product {
   name: string;
   price: number;
   image?: string;
-  phoneModel: string;
+  phoneModels: string[]; // güncellendi
   caseType: string;
   rating: number;
 }
@@ -21,13 +21,13 @@ export default function CaseTypesPage() {
   const [searchParams] = useSearchParams();
   const selectedModel = searchParams.get("model");
 
-  // Türkçe karakterleri temizleyip slug’a çevir
+  // string'i slug haline getir (örneğin "iPhone 11" → "iphone-11")
   const slugify = (text: string) =>
     text
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "") // Türkçe karakter temizliği
-      .replace(/\s+/g, "-"); // Boşlukları "-" yap
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-");
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -40,11 +40,12 @@ export default function CaseTypesPage() {
         setProducts([]);
       } else {
         const filtered = selectedModel
-          ? data.filter((item) => {
-              const modelSlug = slugify(item.phoneModel);
-              const paramSlug = selectedModel.toLowerCase();
-              return modelSlug === paramSlug;
-            })
+          ? data.filter((product) =>
+              Array.isArray(product.phoneModels) &&
+              product.phoneModels.some(
+                (m) => slugify(m) === selectedModel.toLowerCase()
+              )
+            )
           : data;
 
         setProducts(filtered as Product[]);
