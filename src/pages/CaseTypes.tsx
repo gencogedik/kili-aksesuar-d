@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams } from 'react-router-dom';
 import ProductCard from "@/components/ProductCard";
 
 const slugify = (text: string) =>
