@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@/contexts/UserContext";
+import { useAuth } from "@/contexts/AuthContext"; // ✅ düzeltildi
 
 const Orders = () => {
-  const { user } = useUser();
+  const { user } = useAuth(); // ✅ düzeltildi
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -11,7 +11,6 @@ const Orders = () => {
     if (!user) return;
 
     const fetchOrders = async () => {
-      // Siparişleri ve altındaki ürünleri getir
       const { data: ordersData, error } = await supabase
         .from("orders")
         .select(`
@@ -68,18 +67,4 @@ const Orders = () => {
                         <p className="text-sm text-gray-600">
                           {item.phone_model} - {item.case_type}
                         </p>
-                        <p className="text-sm">Adet: {item.quantity} • Fiyat: {item.price} TL</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-export default Orders;
+                        <p className="text-sm">Adet:
