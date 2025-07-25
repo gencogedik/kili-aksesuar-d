@@ -1,5 +1,5 @@
 // src/App.tsx
-import Orders from "./pages/Orders";
+
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AuthCallback from "./pages/AuthCallback";
 import { Toaster } from "@/components/ui/toaster";
@@ -20,7 +20,7 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
-import ProfileOrders from "./pages/ProfileOrders"; // ✅ yeni route
+import Orders from "./pages/Orders"; // ✅ Siparişlerim sayfası
 
 const queryClient = new QueryClient();
 
@@ -38,14 +38,13 @@ const App = () => (
               <Route path="/case-types" element={<CaseTypes />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
-              <Route path="/profile/orders" element={<Orders />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/orders" element={<ProfileOrders />} /> {/* ✅ DÜZENLENDİ */}
+              <Route path="/profile/orders" element={<Orders />} /> {/* ✅ Siparişlerim */}
               <Route path="/admin" element={<Admin />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
