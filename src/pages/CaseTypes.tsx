@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from "@/components/ProductCard";
 
