@@ -1,5 +1,5 @@
 // src/App.tsx
-
+import Orders from "./pages/Orders";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import AuthCallback from "./pages/AuthCallback";
 import { Toaster } from "@/components/ui/toaster";
@@ -38,6 +38,7 @@ const App = () => (
               <Route path="/case-types" element={<CaseTypes />} />
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
+              <Route path="/profile/orders" element={<Orders />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<Auth />} />
