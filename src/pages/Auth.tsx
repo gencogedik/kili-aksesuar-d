@@ -8,7 +8,7 @@ const Auth = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://shufflecase.com/auth/callback",
+        redirectTo: "https://shufflecase.com/auth/callback", // ✅ Düzenlendi
       },
     });
 
