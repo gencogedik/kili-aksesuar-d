@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext"; // ✅ düzeltildi
+import { useAuth } from "@/contexts/AuthContext";
 
 const Orders = () => {
-  const { user } = useAuth(); // ✅ düzeltildi
+  const { user } = useAuth();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -67,4 +67,18 @@ const Orders = () => {
                         <p className="text-sm text-gray-600">
                           {item.phone_model} - {item.case_type}
                         </p>
-                        <p className="text-sm">Adet:
+                        <p className="text-sm">Adet: {item.quantity} • Fiyat: {item.price} TL</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
+
+export default Orders;
