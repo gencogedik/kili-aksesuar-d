@@ -139,22 +139,110 @@ const Contact = () => {
                 Mesaj Gönder
               </button>
 
-              {/* Privacy Policy Link */}
               <div className="text-center mt-4">
                 <Link
                   to="/privacy-policy"
                   className="text-sm text-gray-500 hover:text-metallic-700 underline transition-colors"
                 >
-                  Gizlilik Politikasını Görüntüle
+                  Gizlilik Politikası
                 </Link>
               </div>
             </form>
           </div>
 
-          {/* Contact Info & FAQ */}
+          {/* Contact Info */}
           <div className="space-y-6">
-            {/* (contact details & faq bölümleri aynı şekilde devam ediyor) */}
-            {/* ... */}
+            {/* Contact Details */}
+            <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
+              <h3 className="text-xl font-bold text-metallic-800 mb-6">İletişim Bilgileri</h3>
+              
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-metallic-600 to-metallic-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-metallic-800">Telefon</h4>
+                    <p className="text-gray-600">+90 (541) 192 5206</p>
+                    <p className="text-sm text-gray-500 mt-1">Pazartesi - Cuma: 09:00 - 18:00</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-metallic-600 to-metallic-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-metallic-800">E-posta</h4>
+                    <p className="text-gray-600">shufflekap@gmail.com</p>
+                    <p className="text-gray-600">gedikgenco@gmail.com</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-metallic-600 to-metallic-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-metallic-800">Adres</h4>
+                    <p className="text-gray-600">
+                      Final Dershanesi çaprazı<br />
+                      Dr. Ali Menteşoğlu Caddesi No: 4<br />
+                      Seyhan / Adana
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-metallic-600 to-metallic-800 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Clock className="w-6 h-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-metallic-800">Çalışma Saatleri</h4>
+                    <p className="text-gray-600">Pazartesi - Cuma: 09:00 - 18:00</p>
+                    <p className="text-gray-600">Cumartesi: 10:00 - 16:00</p>
+                    <p className="text-gray-600">Pazar: Kapalı</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* FAQ */}
+            <div className="bg-white rounded-xl shadow-lg p-6 lg:p-8">
+              <h3 className="text-xl font-bold text-metallic-800 mb-6">Sıkça Sorulan Sorular</h3>
+              
+              <div className="space-y-4">
+                <details className="group">
+                  <summary className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <span className="font-medium text-metallic-800">Kargo süresi ne kadar?</span>
+                    <span className="text-metallic-600 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <p className="mt-3 text-gray-600 px-3">
+                    Siparişleriniz 1-2 iş günü içinde kargoya verilir ve genellikle 2-3 iş günü içinde adresinize ulaşır.
+                  </p>
+                </details>
+
+                <details className="group">
+                  <summary className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <span className="font-medium text-metallic-800">İade politikanız nedir?</span>
+                    <span className="text-metallic-600 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <p className="mt-3 text-gray-600 px-3">
+                    Ürünlerinizi teslim aldığınız tarihten itibaren 14 gün içinde hiçbir sebep göstermeden iade edebilirsiniz.
+                  </p>
+                </details>
+
+                <details className="group">
+                  <summary className="flex items-center justify-between cursor-pointer p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <span className="font-medium text-metallic-800">Özel tasarım yaptırabilir miyim?</span>
+                    <span className="text-metallic-600 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <p className="mt-3 text-gray-600 px-3">
+                    Evet, kendi tasarımınızı gönderebilir veya bizimle birlikte özel bir tasarım oluşturabilirsiniz.
+                  </p>
+                </details>
+              </div>
+            </div>
           </div>
         </div>
       </div>
