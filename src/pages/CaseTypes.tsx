@@ -21,26 +21,30 @@ export default function CaseTypesPage() {
   const [searchParams] = useSearchParams();
   const selectedModel = searchParams.get("model");
 
-  // Slug formatına çevir (örneğin: "iPhone 11" → "iphone-11")
+  // Türkçe karakterleri temizleyip slug’a çevir
   const slugify = (text: string) =>
     text
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, "-");
+      .replace(/[\u0300-\u036f]/g, "") // Türkçe karakter temizliği
+      .replace(/\s+/g, "-"); // Boşlukları "-" yap
 
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
+
       const { data, error } = await supabase.from("products").select("*");
 
       if (error) {
-        console.error("Ürünleri getirirken hata oluştu:", error.message);
+        console.error("Ürün verisi alınamadı:", error.message);
+        setProducts([]);
       } else {
         const filtered = selectedModel
-          ? data.filter(
-              (p) => slugify(p.phoneModel) === selectedModel.toLowerCase()
-            )
+          ? data.filter((item) => {
+              const modelSlug = slugify(item.phoneModel);
+              const paramSlug = selectedModel.toLowerCase();
+              return modelSlug === paramSlug;
+            })
           : data;
 
         setProducts(filtered as Product[]);
