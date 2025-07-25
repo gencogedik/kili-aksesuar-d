@@ -21,6 +21,14 @@ export default function CaseTypesPage() {
   const [searchParams] = useSearchParams();
   const selectedModel = searchParams.get("model");
 
+  // Türkçe karakterleri silip slug'a çeviren yardımcı fonksiyon
+  const slugify = (text: string) =>
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-");
+
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
@@ -32,8 +40,7 @@ export default function CaseTypesPage() {
         const filtered = selectedModel
           ? data.filter(
               (p) =>
-                p.phoneModel.toLowerCase().replace(/\s+/g, "-") ===
-                selectedModel.toLowerCase()
+                slugify(p.phoneModel) === selectedModel?.toLowerCase()
             )
           : data;
 
