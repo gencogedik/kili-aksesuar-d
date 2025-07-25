@@ -40,13 +40,14 @@ export default function CaseTypesPage() {
         setProducts([]);
       } else {
         const filtered = selectedModel
-          ? data.filter((product) =>
-              Array.isArray(product.phoneModels) &&
-              product.phoneModels.some(
-                (m) => slugify(m) === selectedModel.toLowerCase()
-              )
-            )
-          : data;
+  ? data.filter((product) =>
+      Array.isArray(product.phoneModels) &&
+      product.phoneModels.some(
+        (m) => slugify(m ?? "") === selectedModel.toLowerCase()
+      )
+    )
+  : data;
+
 
         setProducts(filtered as Product[]);
       }
