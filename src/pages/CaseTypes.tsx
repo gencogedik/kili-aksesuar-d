@@ -21,13 +21,13 @@ export default function CaseTypesPage() {
   const [searchParams] = useSearchParams();
   const selectedModel = searchParams.get("model");
 
-  // Türkçe karakterleri silip slug'a çeviren yardımcı fonksiyon
+  // Boşlukları tireye çevirip küçük harfe indiren yardımcı fonksiyon
   const slugify = (text: string) =>
     text
       .toLowerCase()
       .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, "-");
+      .replace(/[\u0300-\u036f]/g, "") // Türkçe karakterleri sadeleştir
+      .replace(/\s+/g, "-"); // Boşlukları - yap
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -40,7 +40,7 @@ export default function CaseTypesPage() {
         const filtered = selectedModel
           ? data.filter(
               (p) =>
-                slugify(p.phoneModel) === selectedModel?.toLowerCase()
+                slugify(p.phoneModel) === selectedModel.toLowerCase()
             )
           : data;
 
