@@ -139,12 +139,12 @@ const CaseTypesPage = () => {
             Tümü
           </button>
           <button
-            onClick={() => setSelectedCaseType("Şeffaf")}
+            onClick={() => setSelectedCaseType("Asalet")}
             className={`px-4 py-2 rounded ${
-              selectedCaseType === "Şeffaf" ? "bg-metallic-800 text-white" : "bg-white"
+              selectedCaseType === "Asalet" ? "bg-metallic-800 text-white" : "bg-white"
             }`}
           >
-            Şeffaf
+            Asalet
           </button>
           <button
             onClick={() => setSelectedCaseType("Desenli")}
