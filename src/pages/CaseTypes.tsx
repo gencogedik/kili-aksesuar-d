@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
 import Header from "@/components/Header";
 import { Slider } from "@/components/ui/slider";
 
+// Slugify fonksiyonu URL uyumlu hale getirir
 const slugify = (text: string) =>
   (text || "")
     .toString()
@@ -16,10 +17,28 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
-const simplifyModel = (model: string) => {
-  // iPhone 15 Pro Max => Ip 15 Pro Max
-  return model.replace("iPhone", "Ip");
-};
+// Sabit model listesi
+const iPhoneModels = [
+  "iPhone 11",
+  "iPhone 11 Pro",
+  "iPhone 11 Pro Max",
+  "iPhone 12",
+  "iPhone 12 Mini",
+  "iPhone 12 Pro",
+  "iPhone 12 Pro Max",
+  "iPhone 13",
+  "iPhone 13 Mini",
+  "iPhone 13 Pro",
+  "iPhone 13 Pro Max",
+  "iPhone 14",
+  "iPhone 14 Plus",
+  "iPhone 14 Pro",
+  "iPhone 14 Pro Max",
+  "iPhone 15",
+  "iPhone 15 Plus",
+  "iPhone 15 Pro",
+  "iPhone 15 Pro Max",
+];
 
 const CaseTypesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,9 +48,6 @@ const CaseTypesPage = () => {
   const [filtered, setFiltered] = useState<any[]>([]);
   const [selectedCaseType, setSelectedCaseType] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
-  const [allModels, setAllModels] = useState<string[]>([]);
-
-  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -43,19 +59,6 @@ const CaseTypesPage = () => {
       }
 
       setProducts(data || []);
-
-      // Benzersiz modelleri çıkart
-      const modelsSet = new Set<string>();
-      data?.forEach((product) => {
-        if (Array.isArray(product.phoneModels)) {
-          product.phoneModels.forEach((model: string) => modelsSet.add(model));
-        }
-      });
-
-      const sortedModels = Array.from(modelsSet).sort((a, b) =>
-        a.localeCompare(b, "tr", { numeric: true })
-      );
-      setAllModels(sortedModels);
     };
 
     fetchProducts();
@@ -106,8 +109,8 @@ const CaseTypesPage = () => {
           Kılıf Modelleri
         </h1>
 
-        {/* ✅ Dinamik model butonları */}
-        <div className="flex flex-wrap items-center gap-4 mb-4 justify-center">
+        {/* ✅ Model filtreleri */}
+        <div className="flex flex-wrap gap-3 justify-center mb-6">
           <button
             onClick={() => handleModelClick(null)}
             className={`px-4 py-2 rounded ${
@@ -116,10 +119,9 @@ const CaseTypesPage = () => {
           >
             Hepsi
           </button>
-          {allModels.map((model) => {
-            const isActive = selectedModelSlug
-              ? slugify(model).includes(selectedModelSlug)
-              : false;
+          {iPhoneModels.map((model) => {
+            const slug = slugify(model);
+            const isActive = slug.includes(selectedModelSlug || "");
             return (
               <button
                 key={model}
@@ -128,22 +130,23 @@ const CaseTypesPage = () => {
                   isActive ? "bg-metallic-800 text-white" : "bg-white"
                 }`}
               >
-                {simplifyModel(model)}
+                {model}
               </button>
             );
           })}
         </div>
 
+        {/* ✅ Seçili filtre açıklaması */}
         <p className="text-gray-600 text-sm mb-4 text-center">
           {selectedModelSlug
-            ? `• ${allModels.find((m) =>
+            ? `• ${iPhoneModels.find((m) =>
                 slugify(m).includes(selectedModelSlug)
-              ) || "Filtre"} için filtre uygulanıyor`
+              )} modelleri için filtre uygulanıyor`
             : "• Tüm iPhone modelleri gösteriliyor"}
         </p>
 
-        {/* ✅ Kılıf türü filtreleri */}
-        <div className="flex flex-wrap items-center gap-4 mb-8 justify-center">
+        {/* ✅ Kılıf tipi filtreleri */}
+        <div className="flex flex-wrap justify-center gap-4 mb-8">
           <button
             onClick={() => setSelectedCaseType(null)}
             className={`px-4 py-2 rounded ${
@@ -155,9 +158,7 @@ const CaseTypesPage = () => {
           <button
             onClick={() => setSelectedCaseType("Şeffaf")}
             className={`px-4 py-2 rounded ${
-              selectedCaseType === "Şeffaf"
-                ? "bg-metallic-800 text-white"
-                : "bg-white"
+              selectedCaseType === "Şeffaf" ? "bg-metallic-800 text-white" : "bg-white"
             }`}
           >
             Şeffaf
@@ -165,9 +166,7 @@ const CaseTypesPage = () => {
           <button
             onClick={() => setSelectedCaseType("Desenli")}
             className={`px-4 py-2 rounded ${
-              selectedCaseType === "Desenli"
-                ? "bg-metallic-800 text-white"
-                : "bg-white"
+              selectedCaseType === "Desenli" ? "bg-metallic-800 text-white" : "bg-white"
             }`}
           >
             Desenli
