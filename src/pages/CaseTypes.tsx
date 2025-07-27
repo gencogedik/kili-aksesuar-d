@@ -5,9 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import ProductCard from "@/components/ProductCard";
 import Header from "@/components/Header";
-import { Slider } from "@/components/ui/slider";
 
-// Slugify: URL için uygun hale getirir
 const slugify = (text: string) =>
   (text || "")
     .toString()
@@ -17,27 +15,17 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
-// Sabit iPhone modeli listesi
 const iPhoneModels = [
   "iPhone 11",
   "iPhone 11 Pro",
-  "iPhone 11 Pro Max",
   "iPhone 12",
-  "iPhone 12 Mini",
   "iPhone 12 Pro",
-  "iPhone 12 Pro Max",
   "iPhone 13",
-  "iPhone 13 Mini",
   "iPhone 13 Pro",
-  "iPhone 13 Pro Max",
   "iPhone 14",
-  "iPhone 14 Plus",
   "iPhone 14 Pro",
-  "iPhone 14 Pro Max",
   "iPhone 15",
-  "iPhone 15 Plus",
   "iPhone 15 Pro",
-  "iPhone 15 Pro Max",
 ];
 
 const CaseTypesPage = () => {
@@ -47,7 +35,6 @@ const CaseTypesPage = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
   const [selectedCaseType, setSelectedCaseType] = useState<string | null>(null);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -84,15 +71,8 @@ const CaseTypesPage = () => {
       data = data.filter((product) => product.case_type === selectedCaseType);
     }
 
-    if (priceRange) {
-      data = data.filter(
-        (product) =>
-          product.price >= priceRange[0] && product.price <= priceRange[1]
-      );
-    }
-
     setFiltered(data);
-  }, [products, selectedModelSlug, selectedCaseType, priceRange]);
+  }, [products, selectedModelSlug, selectedCaseType]);
 
   const handleModelClick = (model: string | null) => {
     const params = new URLSearchParams(searchParams);
@@ -112,7 +92,7 @@ const CaseTypesPage = () => {
           Kılıf Modelleri
         </h1>
 
-        {/* ✅ iPhone Model Filtre Butonları */}
+        {/* Model filtreleri */}
         <div className="flex flex-wrap gap-3 justify-center mb-6">
           <button
             onClick={() => handleModelClick(null)}
@@ -139,7 +119,7 @@ const CaseTypesPage = () => {
           })}
         </div>
 
-        {/* ✅ Seçilen Filtre Bilgisi */}
+        {/* Seçili model metni */}
         <p className="text-gray-600 text-sm mb-4 text-center">
           {selectedModelSlug
             ? `• ${iPhoneModels.find((m) =>
@@ -148,7 +128,7 @@ const CaseTypesPage = () => {
             : "• Tüm iPhone modelleri gösteriliyor"}
         </p>
 
-        {/* ✅ Kılıf Tipi Filtreleri */}
+        {/* Kılıf tipi filtreleri */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
           <button
             onClick={() => setSelectedCaseType(null)}
@@ -176,21 +156,7 @@ const CaseTypesPage = () => {
           </button>
         </div>
 
-        {/* ✅ Fiyat Aralığı */}
-        <div className="mb-8 max-w-md mx-auto">
-          <p className="text-center mb-2">
-            Fiyat Aralığı: {priceRange[0]}₺ - {priceRange[1]}₺
-          </p>
-          <Slider
-            min={0}
-            max={1000}
-            step={10}
-            defaultValue={[0, 1000]}
-            onValueChange={(values) => setPriceRange([values[0], values[1]])}
-          />
-        </div>
-
-        {/* ✅ Ürün Listesi */}
+        {/* Ürün listesi */}
         {filtered.length === 0 ? (
           <p className="text-center text-gray-600">Uygun ürün bulunamadı.</p>
         ) : (
