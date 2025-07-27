@@ -7,7 +7,7 @@ import ProductCard from "@/components/ProductCard";
 import Header from "@/components/Header";
 import { Slider } from "@/components/ui/slider";
 
-// Slugify fonksiyonu URL uyumlu hale getirir
+// Slugify: URL için uygun hale getirir
 const slugify = (text: string) =>
   (text || "")
     .toString()
@@ -17,7 +17,7 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
-// Sabit model listesi
+// Sabit iPhone modeli listesi
 const iPhoneModels = [
   "iPhone 11",
   "iPhone 11 Pro",
@@ -68,17 +68,20 @@ const CaseTypesPage = () => {
     let data = [...products];
 
     if (selectedModelSlug) {
-      data = data.filter((product) =>
-        Array.isArray(product.phoneModels)
-          ? product.phoneModels.some((model: string) =>
-              slugify(model).includes(selectedModelSlug)
-            )
-          : false
-      );
+      data = data.filter((product) => {
+        const models: string[] = [
+          ...(Array.isArray(product.compatible_phones) ? product.compatible_phones : []),
+          ...(product.phone_model ? [product.phone_model] : []),
+        ];
+
+        return models.some((model: string) =>
+          slugify(model).includes(selectedModelSlug)
+        );
+      });
     }
 
     if (selectedCaseType) {
-      data = data.filter((product) => product.caseType === selectedCaseType);
+      data = data.filter((product) => product.case_type === selectedCaseType);
     }
 
     if (priceRange) {
@@ -109,7 +112,7 @@ const CaseTypesPage = () => {
           Kılıf Modelleri
         </h1>
 
-        {/* ✅ Model filtreleri */}
+        {/* ✅ iPhone Model Filtre Butonları */}
         <div className="flex flex-wrap gap-3 justify-center mb-6">
           <button
             onClick={() => handleModelClick(null)}
@@ -136,16 +139,16 @@ const CaseTypesPage = () => {
           })}
         </div>
 
-        {/* ✅ Seçili filtre açıklaması */}
+        {/* ✅ Seçilen Filtre Bilgisi */}
         <p className="text-gray-600 text-sm mb-4 text-center">
           {selectedModelSlug
             ? `• ${iPhoneModels.find((m) =>
                 slugify(m).includes(selectedModelSlug)
-              )} modelleri için filtre uygulanıyor`
+              ) || "Filtre"} modelleri için filtre uygulanıyor`
             : "• Tüm iPhone modelleri gösteriliyor"}
         </p>
 
-        {/* ✅ Kılıf tipi filtreleri */}
+        {/* ✅ Kılıf Tipi Filtreleri */}
         <div className="flex flex-wrap justify-center gap-4 mb-8">
           <button
             onClick={() => setSelectedCaseType(null)}
@@ -173,7 +176,7 @@ const CaseTypesPage = () => {
           </button>
         </div>
 
-        {/* ✅ Fiyat filtresi */}
+        {/* ✅ Fiyat Aralığı */}
         <div className="mb-8 max-w-md mx-auto">
           <p className="text-center mb-2">
             Fiyat Aralığı: {priceRange[0]}₺ - {priceRange[1]}₺
@@ -187,7 +190,7 @@ const CaseTypesPage = () => {
           />
         </div>
 
-        {/* ✅ Ürün listesi */}
+        {/* ✅ Ürün Listesi */}
         {filtered.length === 0 ? (
           <p className="text-center text-gray-600">Uygun ürün bulunamadı.</p>
         ) : (
