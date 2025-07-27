@@ -16,16 +16,20 @@ const slugify = (text: string) =>
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
-const iphoneModels = ["iPhone 11", "iPhone 12", "iPhone 13", "iPhone 14", "iPhone 15", "iPhone 16"];
+const simplifyModel = (model: string) => {
+  // iPhone 15 Pro Max => Ip 15 Pro Max
+  return model.replace("iPhone", "Ip");
+};
 
 const CaseTypesPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedModel = searchParams.get("model");
+  const selectedModelSlug = searchParams.get("model")?.toLowerCase() ?? null;
 
   const [products, setProducts] = useState<any[]>([]);
   const [filtered, setFiltered] = useState<any[]>([]);
   const [selectedCaseType, setSelectedCaseType] = useState<string | null>(null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [allModels, setAllModels] = useState<string[]>([]);
 
   const navigate = useNavigate();
 
@@ -39,6 +43,19 @@ const CaseTypesPage = () => {
       }
 
       setProducts(data || []);
+
+      // Benzersiz modelleri çıkart
+      const modelsSet = new Set<string>();
+      data?.forEach((product) => {
+        if (Array.isArray(product.phoneModels)) {
+          product.phoneModels.forEach((model: string) => modelsSet.add(model));
+        }
+      });
+
+      const sortedModels = Array.from(modelsSet).sort((a, b) =>
+        a.localeCompare(b, "tr", { numeric: true })
+      );
+      setAllModels(sortedModels);
     };
 
     fetchProducts();
@@ -47,11 +64,11 @@ const CaseTypesPage = () => {
   useEffect(() => {
     let data = [...products];
 
-    if (selectedModel) {
+    if (selectedModelSlug) {
       data = data.filter((product) =>
         Array.isArray(product.phoneModels)
-          ? product.phoneModels.some(
-              (model: string) => slugify(model) === selectedModel.toLowerCase()
+          ? product.phoneModels.some((model: string) =>
+              slugify(model).includes(selectedModelSlug)
             )
           : false
       );
@@ -69,7 +86,7 @@ const CaseTypesPage = () => {
     }
 
     setFiltered(data);
-  }, [products, selectedModel, selectedCaseType, priceRange]);
+  }, [products, selectedModelSlug, selectedCaseType, priceRange]);
 
   const handleModelClick = (model: string | null) => {
     const params = new URLSearchParams(searchParams);
@@ -89,35 +106,39 @@ const CaseTypesPage = () => {
           Kılıf Modelleri
         </h1>
 
-        {/* ✅ iPhone model filtreleri */}
+        {/* ✅ Dinamik model butonları */}
         <div className="flex flex-wrap items-center gap-4 mb-4 justify-center">
           <button
             onClick={() => handleModelClick(null)}
             className={`px-4 py-2 rounded ${
-              !selectedModel ? "bg-metallic-800 text-white" : "bg-white"
+              !selectedModelSlug ? "bg-metallic-800 text-white" : "bg-white"
             }`}
           >
             Hepsi
           </button>
-          {iphoneModels.map((model) => (
-            <button
-              key={model}
-              onClick={() => handleModelClick(model)}
-              className={`px-4 py-2 rounded ${
-                slugify(model) === selectedModel?.toLowerCase()
-                  ? "bg-metallic-800 text-white"
-                  : "bg-white"
-              }`}
-            >
-              {model}
-            </button>
-          ))}
+          {allModels.map((model) => {
+            const isActive = selectedModelSlug
+              ? slugify(model).includes(selectedModelSlug)
+              : false;
+            return (
+              <button
+                key={model}
+                onClick={() => handleModelClick(model)}
+                className={`px-4 py-2 rounded ${
+                  isActive ? "bg-metallic-800 text-white" : "bg-white"
+                }`}
+              >
+                {simplifyModel(model)}
+              </button>
+            );
+          })}
         </div>
 
-        {/* ✅ Seçili model açıklama */}
         <p className="text-gray-600 text-sm mb-4 text-center">
-          {selectedModel
-            ? `• ${iphoneModels.find((m) => slugify(m) === selectedModel)?.toUpperCase()} modelleri için filtrelenmiş ürünler`
+          {selectedModelSlug
+            ? `• ${allModels.find((m) =>
+                slugify(m).includes(selectedModelSlug)
+              ) || "Filtre"} için filtre uygulanıyor`
             : "• Tüm iPhone modelleri gösteriliyor"}
         </p>
 
@@ -134,7 +155,9 @@ const CaseTypesPage = () => {
           <button
             onClick={() => setSelectedCaseType("Şeffaf")}
             className={`px-4 py-2 rounded ${
-              selectedCaseType === "Şeffaf" ? "bg-metallic-800 text-white" : "bg-white"
+              selectedCaseType === "Şeffaf"
+                ? "bg-metallic-800 text-white"
+                : "bg-white"
             }`}
           >
             Şeffaf
@@ -142,7 +165,9 @@ const CaseTypesPage = () => {
           <button
             onClick={() => setSelectedCaseType("Desenli")}
             className={`px-4 py-2 rounded ${
-              selectedCaseType === "Desenli" ? "bg-metallic-800 text-white" : "bg-white"
+              selectedCaseType === "Desenli"
+                ? "bg-metallic-800 text-white"
+                : "bg-white"
             }`}
           >
             Desenli
