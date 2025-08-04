@@ -5,26 +5,21 @@ import { Star, ShoppingCart } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { toast } from 'sonner';
 
-// Ürün arayüzü, veritabanından gelen snake_case isimlendirmeye göre güncellendi.
+// Arayüz, Supabase'den gelen snake_case formatına uyumlu hale getirildi.
 interface Product {
   id: string;
   name: string;
   price: number;
-  image_url?: string;
-  phone_model: string;
-  case_type: string;
-  // 'rating' veritabanında olmadığı için opsiyonel yapıldı, varsayılan değer kullanılacak.
-  rating?: number; 
+  image_url?: string;     // 'image' -> 'image_url' olarak düzeltildi
+  phone_model: string;   // 'phoneModel' -> 'phone_model' olarak düzeltildi
+  case_type: string;     // 'caseType' -> 'case_type' olarak düzeltildi
+  rating?: number;        // Veritabanında olmadığı için opsiyonel bırakıldı
   stock_quantity: number;
 }
 
-// Bu yardımcı fonksiyon, product nesnesinin camelCase'e dönüştürülmüş halini kullanır.
-const getImagePath = (imageURL?: string, productName?: string): string => {
-  if (imageURL?.startsWith('http')) {
-    return imageURL;
-  }
-  // Fallback için ürün adı gerekiyorsa diye eklendi.
-  const normalizedName = (productName || "")
+// Orijinal normalize fonksiyonunuz
+const normalizeFileName = (name: string): string => {
+  return (name || '')
     .toLowerCase()
     .replace(/ç/g, 'c')
     .replace(/ğ/g, 'g')
@@ -34,12 +29,18 @@ const getImagePath = (imageURL?: string, productName?: string): string => {
     .replace(/ü/g, 'u')
     .replace(/\s+/g, '-')
     .replace(/[^\w\-]/g, '');
-    
-  return `/images/${normalizedName}.jpg`;
+};
+
+// Orijinal getImagePath fonksiyonunuz, yeni 'product' yapısına göre düzenlendi
+const getImagePath = (product: Product): string => {
+  if (product.image_url?.startsWith('http')) {
+    return product.image_url;
+  }
+  return `/images/${normalizeFileName(product.name)}.jpg`;
 };
 
 const ProductDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+  const { id } = useParams();
   const { dispatch } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,10 +54,8 @@ const ProductDetail: React.FC = () => {
       }
 
       try {
-        // ✅ SORUNUN KAYNAĞI:
-        // 'select' sorgusundaki alan adları veritabanındaki (snake_case) ile eşleşmeli.
-        // 'image' -> 'image_url' olarak düzeltildi.
-        // 'rating' alanı veritabanında olmadığı için sorgudan kaldırıldı.
+        // ✅ ANA DÜZELTME:
+        // Sorgudaki alan adları veritabanındaki (snake_case) ile eşleştirildi.
         const { data, error } = await supabase
           .from('products')
           .select('id, name, price, image_url, phone_model, case_type, stock_quantity')
@@ -66,11 +65,9 @@ const ProductDetail: React.FC = () => {
         if (error) {
           throw error;
         }
-        
         setProduct(data);
       } catch (err: any) {
         console.error('🔥 Ürün getirme hatası:', err.message);
-        toast.error("Ürün yüklenirken bir hata oluştu.");
       } finally {
         setLoading(false);
       }
@@ -78,18 +75,17 @@ const ProductDetail: React.FC = () => {
 
     fetchProduct();
   }, [id]);
-
+  
   const handleAddToCart = () => {
     if (!product) return;
-    
-    // ✅ 'dispatch' edilirken CartContext'in beklediği camelCase formata dönüştürülüyor.
+    // Sepete eklerken CartContext'in beklediği camelCase formata dönüştürüldü.
     dispatch({
       type: 'ADD_ITEM',
       payload: {
         id: product.id,
         name: product.name,
         price: product.price,
-        image: getImagePath(product.image_url, product.name),
+        image: getImagePath(product),
         phoneModel: product.phone_model,
         caseType: product.case_type,
       },
@@ -98,28 +94,26 @@ const ProductDetail: React.FC = () => {
   };
 
   if (loading) return <div className="text-center p-10 text-gray-500">Yükleniyor...</div>;
-
   if (!product) return <div className="text-center p-10 text-red-500">Ürün bulunamadı.</div>;
 
-  // ✅ Stok miktarının number olduğundan emin oluyoruz.
+  // Stok miktarının sayı olduğundan emin olalım.
   const stockQuantity = Number(product.stock_quantity);
 
   return (
     <div className="max-w-4xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
         <img
-          src={getImagePath(product.image_url, product.name)}
+          src={getImagePath(product)}
           alt={product.name}
           className="w-full h-full object-cover"
         />
       </div>
       <div>
         <h1 className="text-3xl font-bold text-metallic-800 mb-2">{product.name}</h1>
-        {/* ✅ Gelen veriye uygun olarak 'phone_model' ve 'case_type' kullanıldı. */}
         <p className="text-gray-600 text-sm mb-1">{product.phone_model} • {product.case_type}</p>
 
         <div className="flex items-center mb-4">
-          {/* ✅ 'rating' alanı için varsayılan bir değer (|| 4.5) eklendi. */}
+          {/* Rating verisi olmadığı için varsayılan bir değer (4.5) eklendi */}
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
@@ -128,7 +122,7 @@ const ProductDetail: React.FC = () => {
           ))}
           <span className="text-sm text-gray-600 ml-2">({product.rating || 4.5})</span>
         </div>
-        
+
         {/* ✅ CANLI STOK BİLGİSİ */}
         {stockQuantity > 0 ? (
           <p className="text-sm text-green-600 mb-2">✅ Stokta {stockQuantity} adet var</p>
@@ -141,7 +135,6 @@ const ProductDetail: React.FC = () => {
         <button
           onClick={handleAddToCart}
           className="metallic-button text-white px-6 py-3 rounded-lg text-lg font-medium hover:transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
-          // ✅ Stok kontrolü
           disabled={stockQuantity === 0}
         >
           <ShoppingCart className="w-5 h-5" />
