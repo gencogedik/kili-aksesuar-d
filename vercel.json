@@ -3,8 +3,8 @@
     { "source": "/(.*)", "destination": "/" }
   ],
   "functions": {
-    "api/**/*.ts": {
-      "runtime": "vercel-node@18.14.2"
+    "src/pages/api/**/*.ts": {
+      "runtime": "vercel-nodejs@18.x"
     }
   }
 }
