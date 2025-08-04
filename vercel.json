@@ -4,7 +4,9 @@
   ],
   "functions": {
     "src/pages/api/**/*.ts": {
-      "runtime": "vercel-nodejs@18.x"
+      "runtime": "nodejs18.x"
+
     }
   }
 }
+
