@@ -53,7 +53,7 @@ const ProductDetail: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('products')
-          .select('id, name, price, image_url, phone_model, case_type, stock_quantity')
+          .select('id, name, price, image_url, phone_model, case_type, stock_quantity, rating')
           .eq('id', id)
           .single();
 
@@ -93,7 +93,6 @@ const ProductDetail: React.FC = () => {
   if (!product)
     return <div className="text-center p-10 text-red-500">Ürün bulunamadı.</div>;
 
-  const stockQuantity = Number(product.stock_quantity);
   const rating = product.rating ?? 4.5;
 
   return (
@@ -122,8 +121,9 @@ const ProductDetail: React.FC = () => {
           <span className="text-sm text-gray-600 ml-2">({rating})</span>
         </div>
 
-        {stockQuantity > 0 ? (
-          <p className="text-sm text-green-600 mb-2">✅ Stokta {stockQuantity} adet var</p>
+        {/* Stok adedi gösterimi buraya eklendi */}
+        {product.stock_quantity > 0 ? (
+          <p className="text-sm text-green-600 mb-2">✅ Stokta {product.stock_quantity} adet var</p>
         ) : (
           <p className="text-sm text-red-500 mb-2">❌ Stokta kalmadı</p>
         )}
@@ -133,7 +133,7 @@ const ProductDetail: React.FC = () => {
         <button
           onClick={handleAddToCart}
           className="metallic-button text-white px-6 py-3 rounded-lg text-lg font-medium hover:transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
-          disabled={stockQuantity === 0}
+          disabled={product.stock_quantity === 0}
         >
           <ShoppingCart className="w-5 h-5" />
           Sepete Ekle
