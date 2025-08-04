@@ -1,30 +1,29 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { supabase } from '@/integrations/supabase/client';
 
+// Bu endpoint sadece POST isteklerini kabul eder
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Only POST allowed' });
+    return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const data = req.body;
+  try {
+    // PayTR bildirim verisi burada gelir
+    const body = req.body;
 
-  console.log('PayTR notification received:', data);
+    // Örnek: Ödeme başarılı mı kontrol et
+    if (body.status === 'success') {
+      console.log('✅ Ödeme başarılı:', body.merchant_oid);
 
-  if (data.status === 'success') {
-    const orderId = data.order_id;
+      // Ödeme sonucunu veritabanına kaydedebilirsin (Supabase örneği aşağıda)
+      // await supabase.from('orders').insert({...})
 
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: 'paid' })
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('Supabase update error:', error.message);
-      return res.status(500).json({ message: 'Database update failed' });
+      res.status(200).send('OK');
+    } else {
+      console.warn('⚠️ Ödeme başarısız veya eksik:', body);
+      res.status(400).send('Invalid');
     }
-
-    return res.status(200).json({ message: 'Order updated as paid' });
+  } catch (error) {
+    console.error('🔥 Hata:', error);
+    res.status(500).send('Internal Server Error');
   }
-
-  return res.status(200).json({ message: 'Notification received' });
 }
