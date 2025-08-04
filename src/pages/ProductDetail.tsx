@@ -39,29 +39,45 @@ const ProductDetail: React.FC = () => {
   const { id } = useParams();
   const { dispatch } = useCart();
   const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProduct = async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('id, name, price, image, rating, phoneModel, caseType, stock_quantity')
-        .eq('id', id)
-        .single();
+      if (!id) {
+        console.error("❌ URL'den ID alınamadı.");
+        setLoading(false);
+        return;
+      }
 
-      if (error) {
-        console.error('Ürün alınırken hata:', error.message);
-      } else {
-        console.log("🧪 Ürün verisi:", data);
+      try {
+        const { data, error } = await supabase
+          .from('products')
+          .select('id, name, price, image, rating, phoneModel, caseType, stock_quantity')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('❌ Supabase Hatası:', error.message);
+        }
+
+        if (!data) {
+          console.warn('⚠️ Supabase boş veri döndürdü');
+        }
+
         setProduct(data);
+      } catch (err) {
+        console.error('🔥 fetchProduct try/catch hatası:', err);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProduct();
   }, [id]);
 
-  if (!product) {
-    return <div>Yükleniyor...</div>;
-  }
+  if (loading) return <div className="text-center p-10 text-gray-500">Yükleniyor...</div>;
+
+  if (!product) return <div className="text-center p-10 text-red-500">Ürün bulunamadı.</div>;
 
   const handleAddToCart = () => {
     dispatch({
@@ -89,22 +105,17 @@ const ProductDetail: React.FC = () => {
       <div>
         <h1 className="text-3xl font-bold text-metallic-800 mb-2">{product.name}</h1>
         <p className="text-gray-600 text-sm mb-1">{product.phoneModel} • {product.caseType}</p>
-        
-        {/* Derecelendirme yıldızları */}
+
         <div className="flex items-center mb-4">
           {[...Array(5)].map((_, i) => (
             <Star
               key={i}
-              className={`w-5 h-5 ${i < Math.floor(product.rating)
-                ? 'text-yellow-400 fill-current'
-                : 'text-gray-300'
-                }`}
+              className={`w-5 h-5 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
             />
           ))}
           <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
         </div>
 
-        {/* Stok bilgisi */}
         {Number(product.stock_quantity) > 0 ? (
           <p className="text-sm text-green-600 mb-2">✅ Stokta {product.stock_quantity} adet var</p>
         ) : (
