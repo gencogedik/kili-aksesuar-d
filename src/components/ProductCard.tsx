@@ -11,10 +11,7 @@ interface Product {
   phoneModel: string;
   caseType: string;
   rating: number;
-}
-
-interface ProductCardProps {
-  product: Product;
+  stock_quantity: number; // ✅ buraya eklendi
 }
 
 // Türkçe karakterleri sadeleştiren ve dosya adına dönüştüren yardımcı fonksiyon
@@ -28,19 +25,18 @@ const normalizeFileName = (name: string): string => {
     .replace(/ş/g, 's')
     .replace(/ü/g, 'u')
     .replace(/\s+/g, '-')       // boşlukları - ile değiştir
-    .replace(/[^\w\-]/g, '')    // harf, rakam ve tire dışındaki karakterleri kaldır
+    .replace(/[^\w\-]/g, '');   // harf, rakam ve tire dışındaki karakterleri kaldır
 };
 
 // Otomatik resim yolu çözümleyici
 const getImagePath = (product: Product): string => {
   if (product.image?.startsWith('http')) {
-    return product.image; // Supabase veya tam URL varsa direkt kullan
+    return product.image;
   }
-  // Yerel dosya varsayımı
   return `/images/${normalizeFileName(product.name)}.jpg`;
 };
 
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const { dispatch } = useCart();
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -53,8 +49,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         price: product.price,
         image: getImagePath(product),
         phoneModel: product.phoneModel,
-        caseType: product.caseType
-      }
+        caseType: product.caseType,
+      },
     });
   };
 
@@ -64,7 +60,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     <div className="product-card relative group">
       <Link to={`/product/${product.id}`}>
         <div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
-          <img 
+          <img
             src={imageFile}
             alt={product.name}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
@@ -74,9 +70,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <div className="p-6">
           <div className="flex items-center mb-2">
             {[...Array(5)].map((_, i) => (
-              <Star 
-                key={i} 
-                className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`} 
+              <Star
+                key={i}
+                className={`w-4 h-4 ${i < Math.floor(product.rating)
+                  ? 'text-yellow-400 fill-current'
+                  : 'text-gray-300'
+                  }`}
               />
             ))}
             <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
@@ -84,12 +83,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <h3 className="text-xl font-semibold mb-2 text-metallic-800 group-hover:text-metallic-600 transition-colors">
             {product.name}
           </h3>
-          <p className="text-gray-600 text-sm mb-4">{product.phoneModel} • {product.caseType}</p>
+          <p className="text-gray-600 text-sm mb-1">{product.phoneModel} • {product.caseType}</p>
+
+          {/* ✅ Stok miktarı gösterimi */}
+          {product.stock_quantity > 0 ? (
+            <p className="text-sm text-green-600 mb-2">Stokta {product.stock_quantity} adet kaldı</p>
+          ) : (
+            <p className="text-sm text-red-500 mb-2">Stokta kalmadı</p>
+          )}
+
           <div className="flex items-center justify-between">
             <span className="text-2xl font-bold text-metallic-800">{product.price}₺</span>
             <button
               onClick={handleAddToCart}
               className="metallic-button text-white px-4 py-2 rounded-lg text-sm font-medium hover:transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+              disabled={product.stock_quantity === 0}
             >
               <ShoppingCart className="w-4 h-4" />
               Sepete Ekle
