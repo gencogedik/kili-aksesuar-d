@@ -11,7 +11,7 @@ interface Product {
   phoneModel: string;
   caseType: string;
   rating: number;
-  stock_quantity: number; // ✅ buraya eklendi
+  stock_quantity: number; // ✅ stok alanı
 }
 
 // Türkçe karakterleri sadeleştiren ve dosya adına dönüştüren yardımcı fonksiyon
@@ -24,11 +24,11 @@ const normalizeFileName = (name: string): string => {
     .replace(/ö/g, 'o')
     .replace(/ş/g, 's')
     .replace(/ü/g, 'u')
-    .replace(/\s+/g, '-')       // boşlukları - ile değiştir
-    .replace(/[^\w\-]/g, '');   // harf, rakam ve tire dışındaki karakterleri kaldır
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]/g, '');
 };
 
-// Otomatik resim yolu çözümleyici
+// Görsel yolu çözümleyici
 const getImagePath = (product: Product): string => {
   if (product.image?.startsWith('http')) {
     return product.image;
@@ -38,6 +38,11 @@ const getImagePath = (product: Product): string => {
 
 const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
   const { dispatch } = useCart();
+
+  // ✅ TEST LOG'LARI
+  console.log("🧪 Ürün adı:", product.name);
+  console.log("📦 Stok (ham):", product.stock_quantity);
+  console.log("🔢 Stok (Number):", Number(product.stock_quantity));
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -72,24 +77,21 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`w-4 h-4 ${i < Math.floor(product.rating)
-                  ? 'text-yellow-400 fill-current'
-                  : 'text-gray-300'
-                  }`}
+                className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
               />
             ))}
             <span className="text-sm text-gray-600 ml-2">({product.rating})</span>
           </div>
-          <h3 className="text-xl font-semibold mb-2 text-metallic-800 group-hover:text-metallic-600 transition-colors">
+          <h3 className="text-xl font-semibold mb-1 text-metallic-800 group-hover:text-metallic-600 transition-colors">
             {product.name}
           </h3>
           <p className="text-gray-600 text-sm mb-1">{product.phoneModel} • {product.caseType}</p>
 
-          {/* ✅ Stok miktarı gösterimi */}
-          {product.stock_quantity > 0 ? (
-            <p className="text-sm text-green-600 mb-2">Stokta {product.stock_quantity} adet kaldı</p>
+          {/* ✅ STOK GÖRÜNÜMÜ */}
+          {Number(product.stock_quantity) > 0 ? (
+            <p className="text-sm text-green-600 mb-2">✅ Stokta {product.stock_quantity} adet var</p>
           ) : (
-            <p className="text-sm text-red-500 mb-2">Stokta kalmadı</p>
+            <p className="text-sm text-red-500 mb-2">❌ Stokta kalmadı</p>
           )}
 
           <div className="flex items-center justify-between">
@@ -97,7 +99,7 @@ const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
             <button
               onClick={handleAddToCart}
               className="metallic-button text-white px-4 py-2 rounded-lg text-sm font-medium hover:transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
-              disabled={product.stock_quantity === 0}
+              disabled={Number(product.stock_quantity) === 0}
             >
               <ShoppingCart className="w-4 h-4" />
               Sepete Ekle
