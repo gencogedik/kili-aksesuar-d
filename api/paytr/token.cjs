@@ -1,9 +1,8 @@
-// /api/paytr/token.ts
+// /api/paytr/token.cjs
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import crypto from 'crypto';
+const crypto = require('crypto');
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
@@ -16,18 +15,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ status: 'error', reason: 'Eksik parametreler.' });
     }
 
-    const merchant_id = import.meta.env.VITE_PAYTR_MERCHANT_ID;
-    const merchant_key = import.meta.env.VITE_PAYTR_MERCHANT_KEY;
-    const merchant_salt = import.meta.env.VITE_PAYTR_MERCHANT_SALT;
+    const merchant_id = process.env.VITE_PAYTR_MERCHANT_ID;
+    const merchant_key = process.env.VITE_PAYTR_MERCHANT_KEY;
+    const merchant_salt = process.env.VITE_PAYTR_MERCHANT_SALT;
 
     if (!merchant_id || !merchant_key || !merchant_salt) {
       console.error('❌ Sunucu Hatası: PAYTR ortam değişkenleri bulunamadı!');
       return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
     }
 
-    // DÜZELTME: Base64 çevirme işlemi artık sunucuda yapılıyor.
     const user_basket_encoded = Buffer.from(JSON.stringify(user_basket)).toString('base64');
-
     const payment_amount = Math.round(amount * 100);
     const no_installment = '1';
     const max_installment = '0';
@@ -51,7 +48,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .update(hashStr + merchant_salt)
       .digest('base64');
 
-    const postData = {
+    const postData = new URLSearchParams({
       merchant_id,
       user_ip,
       merchant_oid,
@@ -70,12 +67,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeout_limit: '30',
       currency,
       test_mode,
-    };
+    } );
 
     const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams(postData ).toString(),
+      body: postData.toString( ),
     });
 
     const result = await response.json();
@@ -86,8 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.error('PAYTR API Hatası:', result);
       return res.status(400).json({ status: 'error', reason: `PAYTR Hatası: ${result.reason}` });
     }
-  } catch (error: any) {
-    console.error('API Kök Hatası (/api/paytr/token):', error);
+
+  } catch (error) {
+    console.error('API Kök Hatası (/api/paytr/token.cjs):', error.message);
     return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.', details: error.message });
   }
-}
+};
