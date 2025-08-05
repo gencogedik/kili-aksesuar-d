@@ -1,7 +1,10 @@
 {
   "functions": {
-    "api/**/*.ts": {
-      "runtime": "nodejs18.x"
+    "api/paytr/token.ts": {
+      "runtime": "vercel-node@18.x"
+    },
+    "api/notification.ts": {
+      "runtime": "vercel-node@18.x"
     }
   },
   "rewrites": [
