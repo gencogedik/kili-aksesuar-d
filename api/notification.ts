@@ -1,27 +1,66 @@
 // api/notification.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import crypto from 'crypto';
+import { createClient } from '@supabase/supabase-js';
+
+// Supabase server-side client
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // Özel key sadece burada kullanılır
+);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  try {
-    const body = req.body;
+  const body = req.body;
 
-    if (body.status === 'success') {
-      console.log('✅ Ödeme başarılı:', body.merchant_oid);
+  const {
+    merchant_oid,
+    status,
+    total_amount,
+    hash
+  } = body;
 
-      // Burada Supabase işlemi yapılabilir:
-      // await supabase.from('orders').insert({...})
+  const merchant_key = process.env.PAYTR_MERCHANT_KEY!;
+  const merchant_salt = process.env.PAYTR_MERCHANT_SALT!;
 
-      return res.status(200).send('OK');
-    } else {
-      console.warn('⚠️ Ödeme başarısız veya eksik:', body);
-      return res.status(400).send('Invalid');
+  // Güvenlik için hash doğrulaması
+  const tokenStr = merchant_oid + merchant_salt + status + total_amount;
+  const token = crypto
+    .createHmac('sha256', merchant_key)
+    .update(tokenStr)
+    .digest('base64');
+
+  if (token !== hash) {
+    console.error('🚫 Geçersiz hash doğrulaması!');
+    return res.status(400).send('PAYTR notification failed: invalid hash');
+  }
+
+  // Başarılıysa sipariş durumunu güncelle
+  if (status === 'success') {
+    const { error } = await supabase
+      .from('orders')
+      .update({ status: 'paid' })
+      .eq('order_number', merchant_oid);
+
+    if (error) {
+      console.error('❌ Supabase güncelleme hatası:', error.message);
+      return res.status(500).send('Supabase error');
     }
-  } catch (error) {
-    console.error('🔥 Hata:', error);
-    return res.status(500).send('Internal Server Error');
+
+    console.log('✅ Sipariş onaylandı:', merchant_oid);
+    return res.status(200).send('OK');
+  } else {
+    console.warn('⚠️ Ödeme başarısız:', body);
+
+    // Opsiyonel: istersen siparişi "cancelled" yapabilirsin
+    await supabase
+      .from('orders')
+      .update({ status: 'cancelled' })
+      .eq('order_number', merchant_oid);
+
+    return res.status(200).send('OK');
   }
 }
