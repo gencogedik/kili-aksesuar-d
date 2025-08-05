@@ -1,17 +1,30 @@
+// src/pages/Checkout.tsx
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
+import { useCart, CartItem } from '@/contexts/CartContext';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Form, FormControl, FormField, FormItem, FormLabel, FormMessage
-} from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ArrowLeft, CreditCard, MapPin } from 'lucide-react';
+
+// Form doğrulama şeması
+const formSchema = z.object({
+  fullName: z.string().min(3, { message: "Ad Soyad en az 3 karakter olmalıdır." }),
+  phone: z.string().min(10, { message: "Geçerli bir telefon numarası girin." }),
+  addressLine1: z.string().min(10, { message: "Adres en az 10 karakter olmalıdır." }),
+  addressLine2: z.string().optional(),
+  city: z.string().min(2, { message: "Geçerli bir il girin." }),
+  state: z.string().min(2, { message: "Geçerli bir ilçe girin." }),
+  postalCode: z.string().min(5, { message: "Geçerli bir posta kodu girin." }).max(5, { message: "Posta kodu 5 karakter olmalıdır." }),
+});
 
 const Checkout = () => {
   const { user, loading } = useAuth();
@@ -20,62 +33,79 @@ const Checkout = () => {
   const [iframeToken, setIframeToken] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      fullName: '',
-      phone: '',
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      postalCode: ''
+      fullName: '', phone: '', addressLine1: '', addressLine2: '', city: '', state: '', postalCode: ''
     }
   });
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/auth');
-    }
-  }, [user, loading, navigate]);
-
-  useEffect(() => {
-    if (state.items.length === 0) {
-      navigate('/cart');
-    }
-  }, [state.items, navigate]);
+    if (!loading && !user) navigate('/auth');
+    if (state.items.length === 0 && !iframeToken) navigate('/cart');
+  }, [user, loading, state.items, iframeToken, navigate]);
 
   const getUserIP = async (): Promise<string> => {
-    const res = await fetch('https://api.ipify.org?format=json');
-    const data = await res.json();
-    return data.ip;
+    try {
+      const res = await fetch('https://api.ipify.org?format=json' );
+      if (!res.ok) throw new Error('IP adresi alınamadı.');
+      const data = await res.json();
+      return data.ip;
+    } catch (error) {
+      console.error(error);
+      return '127.0.0.1'; // Fallback IP
+    }
   };
 
-  const onSubmit = async (values: any) => {
+  // Sepeti PayTR formatına çevir
+  const encodeUserBasket = (items: CartItem[]) => {
+    const basketArray = items.map(item => [item.name, item.price.toString(), item.quantity]);
+    return Buffer.from(JSON.stringify(basketArray)).toString('base64');
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) return;
-
     setSubmitting(true);
+
     try {
-      const { data: orderNumberData, error: orderNumberError } = await supabase
-        .rpc('generate_order_number');
-      if (orderNumberError) throw orderNumberError;
+      const ip = await getUserIP();
+      const totalAmount = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const finalAmount = Math.round(totalAmount * 1.2); // KDV dahil
+      const user_basket_encoded = encodeUserBasket(state.items);
 
-      const total = Math.round(state.total * 1.2); // KDV dahil
+      // 1. ADIM: PayTR'dan token al
+      const res = await fetch('/api/paytr/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          user_ip: ip,
+          amount: finalAmount,
+          user_name: values.fullName,
+          user_basket_encoded,
+        }),
+      });
 
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert([{
-          user_id: user.id,
-          order_number: orderNumberData,
-          total_amount: total,
-          shipping_address: values,
-          status: 'pending'
-        }])
-        .select()
-        .single();
+      const data = await res.json();
+
+      if (data.status !== 'success') {
+        throw new Error(data.reason || 'Ödeme sağlayıcıdan yanıt alınamadı.');
+      }
+
+      // 2. ADIM: Token alındıktan SONRA siparişi veritabanına kaydet
+      const { error: orderError } = await supabase.from('orders').insert([{
+        id: data.merchant_oid, // PayTR'dan gelen merchant_oid'i sipariş ID'si olarak kullan
+        user_id: user.id,
+        order_number: data.merchant_oid,
+        total_amount: finalAmount,
+        shipping_address: values,
+        status: 'pending_payment' // Durumu "ödeme bekleniyor" olarak ayarla
+      }]);
+
       if (orderError) throw orderError;
 
       const orderItems = state.items.map(item => ({
-        order_id: order.id,
+        order_id: data.merchant_oid,
         product_name: item.name,
         product_image: item.image,
         phone_model: item.phoneModel,
@@ -83,149 +113,115 @@ const Checkout = () => {
         price: item.price,
         quantity: item.quantity
       }));
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
+      
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw itemsError;
 
-      const ip = await getUserIP();
+      // 3. ADIM: Her şey başarılıysa, ödeme ekranını göster ve sepeti temizle
+      setIframeToken(data.token);
+      dispatch({ type: 'CLEAR_CART' });
 
-      const res = await fetch('/api/paytr/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email,
-          user_ip: ip,
-          amount: total,
-          user_name: values.fullName
-        }),
-      });
-      const data = await res.json();
-
-      if (data.status === 'success') {
-        setIframeToken(data.token);
-        dispatch({ type: 'CLEAR_CART' });
-      } else {
-        throw new Error(data.reason || 'Ödeme başlatılamadı.');
-      }
     } catch (error: any) {
+      console.error("Sipariş oluşturma hatası:", error);
       toast.error('Hata: ' + error.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading || !user || state.items.length === 0) return null;
+  if (loading || (!user && !iframeToken)) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Header />
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center gap-4 mb-8">
-          <Link
-            to="/cart"
-            className="inline-flex items-center gap-2 text-metallic-600 hover:text-metallic-800 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Sepete Dön
-          </Link>
-        </div>
+        {!iframeToken && (
+          <div className="flex items-center gap-4 mb-8">
+            <Link to="/cart" className="inline-flex items-center gap-2 text-metallic-600 hover:text-metallic-800 transition-colors">
+              <ArrowLeft className="w-4 h-4" /> Sepete Dön
+            </Link>
+          </div>
+        )}
 
         {iframeToken ? (
-          <>
-            <script src="https://www.paytr.com/js/iframeResizer.min.js"></script>
-            <iframe
-              src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
-              id="paytriframe"
-              frameBorder="0"
-              scrolling="no"
-              style={{ width: '100%', height: '700px' }}
-            />
-            <script dangerouslySetInnerHTML={{ __html: `iFrameResize({},'#paytriframe');` }} />
-          </>
-        ) : (
+          <div>
+            <h2 className="text-2xl font-bold text-center mb-4">Ödeme Ekranı</h2>
+            <p className="text-center text-gray-600 mb-6">Lütfen ödemeyi tamamlamak için aşağıdaki adımları izleyin.</p>
+            <div className="max-w-2xl mx-auto border rounded-lg overflow-hidden shadow-lg">
+              <script src="https://www.paytr.com/js/iframeResizer.min.js"></script>
+              <iframe
+                src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
+                id="paytriframe"
+                frameBorder="0"
+                scrolling="no"
+                style={{ width: '100%', minHeight: '600px' }}
+              />
+            </div>
+          </div>
+         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Teslimat Formu */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <MapPin className="w-6 h-6 text-metallic-600" />
                   <h2 className="text-2xl font-bold text-metallic-800">Teslimat Bilgileri</h2>
                 </div>
-
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4">
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <FormField control={form.control} name="fullName" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Ad Soyad *</FormLabel>
-                          <FormControl><Input placeholder="Ad Soyad" {...field} /></FormControl>
+                          <FormLabel>Ad Soyad</FormLabel>
+                          <FormControl><Input placeholder="Adınız Soyadınız" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="phone" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Telefon *</FormLabel>
+                          <FormLabel>Telefon</FormLabel>
                           <FormControl><Input placeholder="0555 123 45 67" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                     </div>
-
                     <FormField control={form.control} name="addressLine1" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Adres *</FormLabel>
-                        <FormControl><Input placeholder="Mahalle, Sokak, No" {...field} /></FormControl>
+                        <FormLabel>Adres Satırı 1</FormLabel>
+                        <FormControl><Input placeholder="Mahalle, Sokak, Bina No, Daire No" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
-
-                    <FormField control={form.control} name="addressLine2" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Adres Tarifi (Opsiyonel)</FormLabel>
-                        <FormControl><Input placeholder="Apartman adı, kat, daire no" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <FormField control={form.control} name="city" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>İl *</FormLabel>
-                          <FormControl><Input placeholder="İstanbul" {...field} /></FormControl>
+                          <FormLabel>İl</FormLabel>
+                          <FormControl><Input placeholder="Örn: Adana" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="state" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>İlçe *</FormLabel>
-                          <FormControl><Input placeholder="Kadıköy" {...field} /></FormControl>
+                          <FormLabel>İlçe</FormLabel>
+                          <FormControl><Input placeholder="Örn: Seyhan" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="postalCode" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Posta Kodu *</FormLabel>
-                          <FormControl><Input placeholder="34000" {...field} /></FormControl>
+                          <FormLabel>Posta Kodu</FormLabel>
+                          <FormControl><Input placeholder="Örn: 01150" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                     </div>
-
-                    <Button
-                      type="submit"
-                      disabled={submitting}
-                      className="w-full metallic-button text-white py-4 text-lg flex items-center gap-3"
-                    >
+                    <Button type="submit" disabled={submitting} className="w-full metallic-button text-white py-4 text-lg flex items-center justify-center gap-3 mt-6">
                       <CreditCard className="w-5 h-5" />
-                      {submitting ? 'Sipariş Oluşturuluyor...' : 'Siparişi Tamamla'}
+                      {submitting ? 'Güvenli Ödemeye Yönlendiriliyor...' : 'Ödemeye Geç'}
                     </Button>
                   </form>
                 </Form>
               </div>
             </div>
-
-            {/* Sipariş Özeti */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-lg p-6 sticky top-24">
                 <h3 className="text-xl font-bold text-metallic-800 mb-6">Sipariş Özeti</h3>
@@ -240,33 +236,16 @@ const Checkout = () => {
                         <p className="text-xs text-gray-600">{item.phoneModel}</p>
                         <div className="flex justify-between items-center mt-1">
                           <span className="text-xs text-gray-600">{item.quantity} adet</span>
-                          <span className="font-semibold text-sm">
-                            {(item.price * item.quantity).toLocaleString('tr-TR')}₺
-                          </span>
+                          <span className="font-semibold text-sm">{(item.price * item.quantity).toLocaleString('tr-TR')}₺</span>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
                 <div className="space-y-3 border-t border-gray-200 pt-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Ara Toplam</span>
-                    <span className="font-semibold">{state.total.toLocaleString('tr-TR')}₺</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Kargo</span>
-                    <span className="font-semibold text-green-600">Ücretsiz</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">KDV (%20)</span>
-                    <span className="font-semibold">
-                      {Math.round(state.total * 0.2).toLocaleString('tr-TR')}₺
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-xl font-bold text-metallic-800 border-t border-gray-200 pt-3">
-                    <span>Toplam</span>
-                    <span>{Math.round(state.total * 1.2).toLocaleString('tr-TR')}₺</span>
-                  </div>
+                  <div className="flex justify-between"><span className="text-gray-600">Ara Toplam</span><span className="font-semibold">{state.total.toLocaleString('tr-TR')}₺</span></div>
+                  <div className="flex justify-between"><span className="text-gray-600">KDV (%20)</span><span className="font-semibold">{Math.round(state.total * 0.2).toLocaleString('tr-TR')}₺</span></div>
+                  <div className="flex justify-between text-xl font-bold text-metallic-800 border-t border-gray-200 pt-3 mt-3"><span>Toplam</span><span>{Math.round(state.total * 1.2).toLocaleString('tr-TR')}₺</span></div>
                 </div>
               </div>
             </div>
