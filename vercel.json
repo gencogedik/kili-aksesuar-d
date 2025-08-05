@@ -1,7 +1,5 @@
 {
   "rewrites": [
-    { "source": "/api/paytr/token", "destination": "/api/paytr-handler" },
-    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
