@@ -52,6 +52,11 @@ const Checkout = () => {
     }
   };
 
+  const encodeUserBasket = (items: CartItem[]) => {
+    const basketArray = items.map(item => [item.name, item.price.toString(), item.quantity]);
+    return Buffer.from(JSON.stringify(basketArray)).toString('base64');
+  };
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (!user) return;
     setSubmitting(true);
@@ -60,24 +65,25 @@ const Checkout = () => {
       const merchant_oid = 'SHUFFLE-' + Date.now();
       const totalAmount = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const finalAmount = Math.round(totalAmount * 1.2);
-      
-      // DÜZELTME: Sepeti Base64'e çevirme işi buradan kaldırıldı.
-      // API'ye ham JSON olarak gönderiyoruz.
-      const user_basket = state.items.map(item => [item.name, item.price.toString(), item.quantity]);
 
-      // 1. ADIM: Siparişi "pending" olarak veritabanına kaydet
-      const { error: orderError } = await supabase.from('orders').insert([{
-        id: merchant_oid,
+      // ========================================================================
+      // NİHAİ DÜZELTME:
+      // 1. 'id' alanını kaldırarak Supabase'in otomatik UUID oluşturmasını sağlıyoruz.
+      // 2. .select().single() ile yeni oluşturulan siparişin verilerini (ve UUID'sini) geri alıyoruz.
+      const { data: newOrder, error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
-        order_number: merchant_oid,
+        order_number: merchant_oid, // PayTR için oluşturduğumuz numara buraya
         total_amount: finalAmount,
         shipping_address: values,
         status: 'pending'
-      }]);
-      if (orderError) throw new Error(`Sipariş veritabanına kaydedilemedi: ${orderError.message}`);
+      }]).select().single(); // .select().single() eklendi
 
+      if (orderError) throw new Error(`Sipariş veritabanına kaydedilemedi: ${orderError.message}`);
+      if (!newOrder) throw new Error('Sipariş oluşturuldu ancak verisi alınamadı.');
+
+      // 3. Sipariş ürünlerini, veritabanından gelen doğru 'newOrder.id' ile bağlıyoruz.
       const orderItems = state.items.map(item => ({
-        order_id: merchant_oid,
+        order_id: newOrder.id, // merchant_oid yerine newOrder.id kullanılıyor
         product_name: item.name,
         product_image: item.image,
         phone_model: item.phoneModel,
@@ -87,9 +93,10 @@ const Checkout = () => {
       }));
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw new Error(`Sipariş ürünleri kaydedilemedi: ${itemsError.message}`);
+      // ========================================================================
 
-      // 2. ADIM: PayTR'dan token iste
       const ip = await getUserIP();
+      const user_basket = state.items.map(item => [item.name, item.price.toString(), item.quantity]);
       
       const res = await fetch('/api/paytr/token', {
         method: 'POST',
@@ -99,8 +106,8 @@ const Checkout = () => {
           user_ip: ip,
           amount: finalAmount,
           user_name: values.fullName,
-          user_basket, // Ham sepet verisini gönder
-          merchant_oid,
+          user_basket,
+          merchant_oid, // PayTR'a hala bu benzersiz numarayı gönderiyoruz
         }),
       });
 
@@ -109,7 +116,6 @@ const Checkout = () => {
         throw new Error(data.reason || 'Ödeme sağlayıcıdan yanıt alınamadı.');
       }
 
-      // 3. ADIM: Her şey başarılıysa, ödeme ekranını göster
       setIframeToken(data.token);
 
     } catch (error: any) {
