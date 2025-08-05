@@ -1,24 +1,26 @@
-// /api/paytr/token.cjs
+// /api/paytr/token.ts
 
-const crypto = require('crypto');
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import crypto from 'crypto';
 
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    return res.status(405).send('Method Not Allowed');
+    // 405 hatasını önlemek için doğru başlıkları gönderiyoruz.
+    res.setHeader('Allow', ['POST']);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   try {
     const { email, user_ip, amount, user_name } = req.body;
 
-    // Değişkenler process.env'den okunur.
-    // Vercel, .cjs dosyaları için bu yöntemi sorunsuz destekler.
+    // Vercel sunucu ortamı için process.env kullanılır.
     const merchant_id = process.env.VITE_PAYTR_MERCHANT_ID;
     const merchant_key = process.env.VITE_PAYTR_MERCHANT_KEY;
     const merchant_salt = process.env.VITE_PAYTR_MERCHANT_SALT;
 
     if (!merchant_id || !merchant_key || !merchant_salt) {
-      console.error('❌ Sunucu Hatası: PAYTR ortam değişkenleri VITE_ önekiyle bulunamadı!');
-      return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası. Değişkenler eksik.' });
+      console.error('❌ Sunucu Hatası: PAYTR ortam değişkenleri bulunamadı!');
+      return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
     }
 
     const payment_amount = amount * 100;
@@ -70,8 +72,8 @@ module.exports = async (req, res) => {
       return res.status(400).json(result);
     }
 
-  } catch (error) {
-    console.error('API Kök Hatası (/api/paytr/token.cjs):', error.message);
+  } catch (error: any) {
+    console.error('API Kök Hatası (/api/paytr/token):', error);
     return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.', details: error.message });
   }
-};
+}
