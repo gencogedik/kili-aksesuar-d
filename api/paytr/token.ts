@@ -1,12 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createHmac } from 'crypto';
+import crypto from 'crypto';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') return res.status(405).end();
+  if (req.method !== 'POST') {
+    return res.status(405).send('Method Not Allowed');
+  }
 
   const { email, user_ip, amount, user_name } = req.body;
 
-  const merchant_id = process.env.PAYTR_MERCHANT_ID!;
+  const merchant_id = process.env.VITE_PAYTR_MERCHANT_ID!;
   const merchant_key = process.env.PAYTR_MERCHANT_KEY!;
   const merchant_salt = process.env.PAYTR_MERCHANT_SALT!;
 
@@ -28,7 +30,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     '1' +
     merchant_salt;
 
-  const paytr_token = createHmac('sha256', merchant_key)
+  const paytr_token = crypto
+    .createHmac('sha256', merchant_key)
     .update(data_to_hash)
     .digest('base64');
 
@@ -53,9 +56,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(postData).toString(),
+    body: new URLSearchParams(postData as any).toString(),
   });
 
   const result = await response.json();
-  res.status(200).json(result);
+  return res.status(200).json(result);
 }
