@@ -1,14 +1,13 @@
 {
   "functions": {
     "api/paytr/token.ts": {
-      "runtime": "vercel-node@22.x"
+      "runtime": "nodejs18.x"
     },
     "api/notification.ts": {
-      "runtime": "vercel-node@22.x"
+      "runtime": "nodejs18.x"
     }
   },
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]
 }
-
