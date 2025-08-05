@@ -3,7 +3,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+// HATA ÇÖZÜMÜ: 'export default' yerine 'module.exports' kullanıyoruz.
+// Bu, Vercel'in bu dosyayı CommonJS modülü olarak ele almasını sağlar ve "exports is not defined" hatasını çözer.
+module.exports = async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
   }
@@ -11,14 +13,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { email, user_ip, amount, user_name } = req.body;
 
-    // DİKKAT: Değişken adlarında VITE_ öneki YOK.
-    const merchant_id = process.env.PAYTR_MERCHANT_ID;
-    const merchant_key = process.env.PAYTR_MERCHANT_KEY;
-    const merchant_salt = process.env.PAYTR_MERCHANT_SALT;
+    // Değişkenler Vite'ın standart yöntemiyle çağrılıyor.
+    const merchant_id = process.env.VITE_PAYTR_MERCHANT_ID;
+    const merchant_key = process.env.VITE_PAYTR_MERCHANT_KEY;
+    const merchant_salt = process.env.VITE_PAYTR_MERCHANT_SALT;
 
     if (!merchant_id || !merchant_key || !merchant_salt) {
-      console.error('❌ Sunucu Hatası: PAYTR ortam değişkenleri eksik veya okunamadı!');
-      return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
+      console.error('❌ Sunucu Hatası: PAYTR ortam değişkenleri VITE_ önekiyle bulunamadı!');
+      return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası. Değişkenler eksik.' });
     }
 
     const payment_amount = amount * 100;
@@ -28,13 +30,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       JSON.stringify([['ShuffleCase Siparişi', amount.toString(), 1]])
     ).toString('base64');
 
-    const data_to_hash =
-      merchant_id + user_ip + merchant_oid + email + payment_amount +
-      user_basket + '1' + '0' + 'TL' + '0';
-
+    const hashStr = merchant_id + user_ip + merchant_oid + email + payment_amount + user_basket + '1' + '0' + 'TL' + '0';
     const paytr_token = crypto
       .createHmac('sha256', merchant_key)
-      .update(data_to_hash)
+      .update(hashStr)
       .digest('base64');
 
     const postData = new URLSearchParams({
@@ -74,7 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
   } catch (error: any) {
-    console.error('API Hatası (/api/paytr/token):', error);
-    return res.status(500).json({ status: 'error', reason: error.message });
+    console.error('API Kök Hatası (/api/paytr/token):', error);
+    return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.', details: error.message });
   }
-}
+};
