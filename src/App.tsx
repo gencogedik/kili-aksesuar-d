@@ -20,7 +20,8 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
-import Orders from "./pages/Orders"; // ✅ Siparişlerim sayfası
+import Orders from "./pages/Orders";
+import OrderSuccess from "./pages/OrderSuccess"; // ✅ Ödeme başarılı sayfası eklendi
 
 const queryClient = new QueryClient();
 
@@ -44,8 +45,9 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/orders" element={<Orders />} /> {/* ✅ Siparişlerim */}
+              <Route path="/profile/orders" element={<Orders />} />
               <Route path="/admin" element={<Admin />} />
+              <Route path="/siparis-alindi" element={<OrderSuccess />} /> {/* ✅ Yeni sayfa */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
