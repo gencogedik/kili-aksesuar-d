@@ -1,12 +1,4 @@
 {
-  "functions": {
-    "api/paytr/token.ts": {
-      "runtime": "nodejs18.x"
-    },
-    "api/notification.ts": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/" }
   ]
