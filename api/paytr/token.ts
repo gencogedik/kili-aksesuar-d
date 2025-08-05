@@ -1,3 +1,5 @@
+// /api/paytr/token.ts
+
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 
@@ -56,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(postData as any).toString(),
+    body: new URLSearchParams(postData).toString(),
   });
 
   const result = await response.json();
