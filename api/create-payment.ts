@@ -1,7 +1,7 @@
 // /api/create-payment.ts
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import crypto from 'crypto';
+import CryptoJS from 'crypto-js'; // YERLEŞİK CRYPTO YERİNE BUNU KULLANIYORUZ
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -25,7 +25,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
     }
 
-    // Base64 çevirme işlemi sunucuda yapılıyor
     const user_basket_encoded = Buffer.from(JSON.stringify(user_basket)).toString('base64');
     const payment_amount = Math.round(amount * 100);
     const currency = 'TL';
@@ -35,12 +34,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       merchant_id + user_ip + merchant_oid + email + payment_amount +
       user_basket_encoded + '1' + '0' + currency + test_mode;
 
-    const paytr_token = crypto
-      .createHmac('sha256', merchant_key)
-      .update(hashStr + merchant_salt)
-      .digest('base64');
+    // ========================================================================
+    // NİHAİ DÜZELTME: crypto-js ile hash oluşturma
+    const hmac = CryptoJS.HmacSHA256(hashStr + merchant_salt, merchant_key);
+    const paytr_token = CryptoJS.enc.Base64.stringify(hmac);
+    // ========================================================================
 
-    const postData = new URLSearchParams({
+    const postData = {
       merchant_id,
       user_ip,
       merchant_oid,
@@ -59,13 +59,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeout_limit: '30',
       currency,
       test_mode,
-    } );
+    };
+
+    const bodyString = Object.keys(postData )
+      // @ts-ignore
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(postData[key])}`)
+      .join('&');
 
     const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: postData.toString( ),
-    });
+      body: bodyString,
+    } );
 
     const result = await response.json();
 
