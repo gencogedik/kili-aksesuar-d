@@ -1,11 +1,8 @@
-// /api/paytr/token.ts
+// /api/paytr/token.cjs
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import crypto from 'crypto';
+const crypto = require('crypto');
 
-// HATA ÇÖZÜMÜ: 'export default' yerine 'module.exports' kullanıyoruz.
-// Bu, Vercel'in bu dosyayı CommonJS modülü olarak ele almasını sağlar ve "exports is not defined" hatasını çözer.
-module.exports = async function handler(req: VercelRequest, res: VercelResponse) {
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
   }
@@ -13,7 +10,8 @@ module.exports = async function handler(req: VercelRequest, res: VercelResponse)
   try {
     const { email, user_ip, amount, user_name } = req.body;
 
-    // Değişkenler Vite'ın standart yöntemiyle çağrılıyor.
+    // Değişkenler process.env'den okunur.
+    // Vercel, .cjs dosyaları için bu yöntemi sorunsuz destekler.
     const merchant_id = process.env.VITE_PAYTR_MERCHANT_ID;
     const merchant_key = process.env.VITE_PAYTR_MERCHANT_KEY;
     const merchant_salt = process.env.VITE_PAYTR_MERCHANT_SALT;
@@ -72,8 +70,8 @@ module.exports = async function handler(req: VercelRequest, res: VercelResponse)
       return res.status(400).json(result);
     }
 
-  } catch (error: any) {
-    console.error('API Kök Hatası (/api/paytr/token):', error);
+  } catch (error) {
+    console.error('API Kök Hatası (/api/paytr/token.cjs):', error.message);
     return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.', details: error.message });
   }
 };
