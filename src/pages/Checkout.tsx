@@ -15,15 +15,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ArrowLeft, CreditCard, MapPin } from 'lucide-react';
 
-// Form doğrulama şeması
 const formSchema = z.object({
   fullName: z.string().min(3, { message: "Ad Soyad en az 3 karakter olmalıdır." }),
   phone: z.string().min(10, { message: "Geçerli bir telefon numarası girin." }),
   addressLine1: z.string().min(10, { message: "Adres en az 10 karakter olmalıdır." }),
-  addressLine2: z.string().optional(),
   city: z.string().min(2, { message: "Geçerli bir il girin." }),
   state: z.string().min(2, { message: "Geçerli bir ilçe girin." }),
-  postalCode: z.string().min(5, { message: "Geçerli bir posta kodu girin." }).max(5, { message: "Posta kodu 5 karakter olmalıdır." }),
+  postalCode: z.string().min(5, { message: "Posta kodu 5 karakter olmalıdır." }).max(5, { message: "Posta kodu 5 karakter olmalıdır." }),
 });
 
 const Checkout = () => {
@@ -35,9 +33,7 @@ const Checkout = () => {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      fullName: '', phone: '', addressLine1: '', addressLine2: '', city: '', state: '', postalCode: ''
-    }
+    defaultValues: { fullName: '', phone: '', addressLine1: '', city: '', state: '', postalCode: '' }
   });
 
   useEffect(() => {
@@ -49,18 +45,11 @@ const Checkout = () => {
     try {
       const res = await fetch('https://api.ipify.org?format=json' );
       if (!res.ok) throw new Error('IP adresi alınamadı.');
-      const data = await res.json();
-      return data.ip;
+      return (await res.json()).ip;
     } catch (error) {
       console.error(error);
-      return '127.0.0.1'; // Fallback IP
+      return '127.0.0.1';
     }
-  };
-
-  // Sepeti PayTR formatına çevir
-  const encodeUserBasket = (items: CartItem[]) => {
-    const basketArray = items.map(item => [item.name, item.price.toString(), item.quantity]);
-    return Buffer.from(JSON.stringify(basketArray)).toString('base64');
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -68,12 +57,40 @@ const Checkout = () => {
     setSubmitting(true);
 
     try {
-      const ip = await getUserIP();
+      const merchant_oid = 'SHUFFLE-' + Date.now();
       const totalAmount = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const finalAmount = Math.round(totalAmount * 1.2); // KDV dahil
-      const user_basket_encoded = encodeUserBasket(state.items);
+      const finalAmount = Math.round(totalAmount * 1.2);
+      
+      // DÜZELTME: Sepeti Base64'e çevirme işi buradan kaldırıldı.
+      // API'ye ham JSON olarak gönderiyoruz.
+      const user_basket = state.items.map(item => [item.name, item.price.toString(), item.quantity]);
 
-      // 1. ADIM: PayTR'dan token al
+      // 1. ADIM: Siparişi "pending" olarak veritabanına kaydet
+      const { error: orderError } = await supabase.from('orders').insert([{
+        id: merchant_oid,
+        user_id: user.id,
+        order_number: merchant_oid,
+        total_amount: finalAmount,
+        shipping_address: values,
+        status: 'pending'
+      }]);
+      if (orderError) throw new Error(`Sipariş veritabanına kaydedilemedi: ${orderError.message}`);
+
+      const orderItems = state.items.map(item => ({
+        order_id: merchant_oid,
+        product_name: item.name,
+        product_image: item.image,
+        phone_model: item.phoneModel,
+        case_type: item.caseType,
+        price: item.price,
+        quantity: item.quantity
+      }));
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) throw new Error(`Sipariş ürünleri kaydedilemedi: ${itemsError.message}`);
+
+      // 2. ADIM: PayTR'dan token iste
+      const ip = await getUserIP();
+      
       const res = await fetch('/api/paytr/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,44 +99,18 @@ const Checkout = () => {
           user_ip: ip,
           amount: finalAmount,
           user_name: values.fullName,
-          user_basket_encoded,
+          user_basket, // Ham sepet verisini gönder
+          merchant_oid,
         }),
       });
 
       const data = await res.json();
-
       if (data.status !== 'success') {
         throw new Error(data.reason || 'Ödeme sağlayıcıdan yanıt alınamadı.');
       }
 
-      // 2. ADIM: Token alındıktan SONRA siparişi veritabanına kaydet
-      const { error: orderError } = await supabase.from('orders').insert([{
-        id: data.merchant_oid, // PayTR'dan gelen merchant_oid'i sipariş ID'si olarak kullan
-        user_id: user.id,
-        order_number: data.merchant_oid,
-        total_amount: finalAmount,
-        shipping_address: values,
-        status: 'pending_payment' // Durumu "ödeme bekleniyor" olarak ayarla
-      }]);
-
-      if (orderError) throw orderError;
-
-      const orderItems = state.items.map(item => ({
-        order_id: data.merchant_oid,
-        product_name: item.name,
-        product_image: item.image,
-        phone_model: item.phoneModel,
-        case_type: item.caseType,
-        price: item.price,
-        quantity: item.quantity
-      }));
-      
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError) throw itemsError;
-
-      // 3. ADIM: Her şey başarılıysa, ödeme ekranını göster ve sepeti temizle
+      // 3. ADIM: Her şey başarılıysa, ödeme ekranını göster
       setIframeToken(data.token);
-      dispatch({ type: 'CLEAR_CART' });
 
     } catch (error: any) {
       console.error("Sipariş oluşturma hatası:", error);
@@ -129,6 +120,7 @@ const Checkout = () => {
     }
   };
 
+  // JSX kısmı aynı kalabilir...
   if (loading || (!user && !iframeToken)) return null;
 
   return (
@@ -148,17 +140,24 @@ const Checkout = () => {
             <h2 className="text-2xl font-bold text-center mb-4">Ödeme Ekranı</h2>
             <p className="text-center text-gray-600 mb-6">Lütfen ödemeyi tamamlamak için aşağıdaki adımları izleyin.</p>
             <div className="max-w-2xl mx-auto border rounded-lg overflow-hidden shadow-lg">
-              <script src="https://www.paytr.com/js/iframeResizer.min.js"></script>
+              <script src="https://www.paytr.com/js/iframeResizer.min.js" async></script>
               <iframe
                 src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
                 id="paytriframe"
                 frameBorder="0"
                 scrolling="no"
                 style={{ width: '100%', minHeight: '600px' }}
+                onLoad={( ) => {
+                  // @ts-ignore
+                  if (window.iFrameResize) {
+                    // @ts-ignore
+                    window.iFrameResize({}, '#paytriframe');
+                  }
+                }}
               />
             </div>
           </div>
-         ) : (
+        ) : (
           <div className="grid lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl shadow-lg p-6">
@@ -186,7 +185,7 @@ const Checkout = () => {
                     </div>
                     <FormField control={form.control} name="addressLine1" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Adres Satırı 1</FormLabel>
+                        <FormLabel>Adres</FormLabel>
                         <FormControl><Input placeholder="Mahalle, Sokak, Bina No, Daire No" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
