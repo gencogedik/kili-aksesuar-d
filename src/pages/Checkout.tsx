@@ -44,18 +44,23 @@ const Checkout = () => {
     }
   }, [state.items, navigate]);
 
+  const getUserIP = async (): Promise<string> => {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    return data.ip;
+  };
+
   const onSubmit = async (values: any) => {
     if (!user) return;
 
     setSubmitting(true);
     try {
-      // 1. Sipariş numarası oluştur
       const { data: orderNumberData, error: orderNumberError } = await supabase
         .rpc('generate_order_number');
       if (orderNumberError) throw orderNumberError;
 
-      // 2. Siparişi kaydet
       const total = Math.round(state.total * 1.2); // KDV dahil
+
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert([{
@@ -69,7 +74,6 @@ const Checkout = () => {
         .single();
       if (orderError) throw orderError;
 
-      // 3. Sipariş ürünleri kaydet
       const orderItems = state.items.map(item => ({
         order_id: order.id,
         product_name: item.name,
@@ -84,13 +88,14 @@ const Checkout = () => {
         .insert(orderItems);
       if (itemsError) throw itemsError;
 
-      // 4. PayTR token al
+      const ip = await getUserIP();
+
       const res = await fetch('/api/paytr/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: user.email,
-          user_ip: '127.0.0.1', // isteğe göre gerçek IP kullanılabilir
+          user_ip: ip,
           amount: total,
           user_name: values.fullName
         }),
@@ -127,13 +132,17 @@ const Checkout = () => {
         </div>
 
         {iframeToken ? (
-          <iframe
-            src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
-            id="paytriframe"
-            frameBorder="0"
-            scrolling="no"
-            style={{ width: '100%', height: '700px' }}
-          />
+          <>
+            <script src="https://www.paytr.com/js/iframeResizer.min.js"></script>
+            <iframe
+              src={`https://www.paytr.com/odeme/guvenli/${iframeToken}`}
+              id="paytriframe"
+              frameBorder="0"
+              scrolling="no"
+              style={{ width: '100%', height: '700px' }}
+            />
+            <script dangerouslySetInnerHTML={{ __html: `iFrameResize({},'#paytriframe');` }} />
+          </>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Teslimat Formu */}
