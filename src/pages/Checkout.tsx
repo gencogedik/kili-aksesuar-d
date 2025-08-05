@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { ArrowLeft, CreditCard, MapPin } from 'lucide-react';
 
+// Form doğrulama şeması
 const formSchema = z.object({
   fullName: z.string().min(3, { message: "Ad Soyad en az 3 karakter olmalıdır." }),
   phone: z.string().min(10, { message: "Geçerli bir telefon numarası girin." }),
@@ -48,13 +49,8 @@ const Checkout = () => {
       return (await res.json()).ip;
     } catch (error) {
       console.error(error);
-      return '127.0.0.1';
+      return '127.0.0.1'; // Fallback IP
     }
-  };
-
-  const encodeUserBasket = (items: CartItem[]) => {
-    const basketArray = items.map(item => [item.name, item.price.toString(), item.quantity]);
-    return Buffer.from(JSON.stringify(basketArray)).toString('base64');
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -65,25 +61,22 @@ const Checkout = () => {
       const merchant_oid = 'SHUFFLE-' + Date.now();
       const totalAmount = state.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const finalAmount = Math.round(totalAmount * 1.2);
+      const user_basket = state.items.map(item => [item.name, item.price.toString(), item.quantity]);
 
-      // ========================================================================
-      // NİHAİ DÜZELTME:
-      // 1. 'id' alanını kaldırarak Supabase'in otomatik UUID oluşturmasını sağlıyoruz.
-      // 2. .select().single() ile yeni oluşturulan siparişin verilerini (ve UUID'sini) geri alıyoruz.
+      // 1. ADIM: Siparişi "pending" olarak veritabanına kaydet
       const { data: newOrder, error: orderError } = await supabase.from('orders').insert([{
         user_id: user.id,
-        order_number: merchant_oid, // PayTR için oluşturduğumuz numara buraya
+        order_number: merchant_oid,
         total_amount: finalAmount,
         shipping_address: values,
         status: 'pending'
-      }]).select().single(); // .select().single() eklendi
+      }]).select().single();
 
       if (orderError) throw new Error(`Sipariş veritabanına kaydedilemedi: ${orderError.message}`);
       if (!newOrder) throw new Error('Sipariş oluşturuldu ancak verisi alınamadı.');
 
-      // 3. Sipariş ürünlerini, veritabanından gelen doğru 'newOrder.id' ile bağlıyoruz.
       const orderItems = state.items.map(item => ({
-        order_id: newOrder.id, // merchant_oid yerine newOrder.id kullanılıyor
+        order_id: newOrder.id,
         product_name: item.name,
         product_image: item.image,
         phone_model: item.phoneModel,
@@ -93,12 +86,11 @@ const Checkout = () => {
       }));
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
       if (itemsError) throw new Error(`Sipariş ürünleri kaydedilemedi: ${itemsError.message}`);
-      // ========================================================================
 
+      // 2. ADIM: PayTR'dan token iste (YENİ VE TEMİZ YOL İLE)
       const ip = await getUserIP();
-      const user_basket = state.items.map(item => [item.name, item.price.toString(), item.quantity]);
       
-      const res = await fetch('/api/paytr/token', {
+      const res = await fetch('/api/create-payment', { // <<-- YOL GÜNCELLENDİ
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -107,15 +99,22 @@ const Checkout = () => {
           amount: finalAmount,
           user_name: values.fullName,
           user_basket,
-          merchant_oid, // PayTR'a hala bu benzersiz numarayı gönderiyoruz
+          merchant_oid,
         }),
       });
 
-      const data = await res.json();
-      if (data.status !== 'success') {
-        throw new Error(data.reason || 'Ödeme sağlayıcıdan yanıt alınamadı.');
+      if (!res.ok) {
+        // Eğer yanıt 4xx veya 5xx ise, hatayı JSON olarak ayrıştırmaya çalış
+        const errorData = await res.json().catch(() => ({ reason: 'Sunucudan okunamayan bir hata yanıtı alındı.' }));
+        throw new Error(errorData.reason || `Sunucu hatası: ${res.status}`);
       }
 
+      const data = await res.json();
+      if (data.status !== 'success') {
+        throw new Error(data.reason || 'Ödeme sağlayıcıdan beklenmedik bir yanıt alındı.');
+      }
+
+      // 3. ADIM: Her şey başarılıysa, ödeme ekranını göster
       setIframeToken(data.token);
 
     } catch (error: any) {
@@ -126,7 +125,6 @@ const Checkout = () => {
     }
   };
 
-  // JSX kısmı aynı kalabilir...
   if (loading || (!user && !iframeToken)) return null;
 
   return (
