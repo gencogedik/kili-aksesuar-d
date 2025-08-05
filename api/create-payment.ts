@@ -4,7 +4,6 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Metot kontrolü
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
@@ -13,12 +12,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { email, user_ip, amount, user_name, user_basket, merchant_oid } = req.body;
 
-    // Gelen verilerin varlığını kontrol et
     if (!email || !user_ip || !amount || !user_name || !user_basket || !merchant_oid) {
       return res.status(400).json({ status: 'error', reason: 'Eksik parametreler.' });
     }
 
-    // Ortam değişkenlerini al
     const merchant_id = process.env.VITE_PAYTR_MERCHANT_ID;
     const merchant_key = process.env.VITE_PAYTR_MERCHANT_KEY;
     const merchant_salt = process.env.VITE_PAYTR_MERCHANT_SALT;
@@ -28,13 +25,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
     }
 
-    // Sepeti Base64 formatına çevir
+    // Base64 çevirme işlemi sunucuda yapılıyor
     const user_basket_encoded = Buffer.from(JSON.stringify(user_basket)).toString('base64');
     const payment_amount = Math.round(amount * 100);
     const currency = 'TL';
     const test_mode = '0';
 
-    // Hash oluşturma
     const hashStr =
       merchant_id + user_ip + merchant_oid + email + payment_amount +
       user_basket_encoded + '1' + '0' + currency + test_mode;
@@ -44,7 +40,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .update(hashStr + merchant_salt)
       .digest('base64');
 
-    // PayTR'a gönderilecek veri
     const postData = new URLSearchParams({
       merchant_id,
       user_ip,
@@ -66,7 +61,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       test_mode,
     } );
 
-    // PayTR'a istek gönderme
     const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -75,7 +69,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const result = await response.json();
 
-    // Sonucu istemciye döndürme
     if (result.status === 'success') {
       return res.status(200).json(result);
     } else {
