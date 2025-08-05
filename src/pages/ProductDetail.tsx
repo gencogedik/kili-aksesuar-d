@@ -1,146 +1,228 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import React from 'react';
+
+import { Link } from 'react-router-dom';
+
 import { Star, ShoppingCart } from 'lucide-react';
+
 import { useCart } from '@/contexts/CartContext';
-import { toast } from 'sonner';
+
+
 
 interface Product {
-  id: string;
-  name: string;
-  price: number;
-  image_url?: string;
-  phone_model: string;
-  case_type: string;
-  rating?: number;
-  stock_quantity: number;
+
+id: string;
+
+name: string;
+
+price: number;
+
+image?: string;
+
+phoneModel: string;
+
+caseType: string;
+
+rating: number;
+
+stock_quantity: number; // ✅ stok alanı
+
 }
 
+
+
+// Türkçe karakterleri sadeleştiren ve dosya adına dönüştüren yardımcı fonksiyon
+
 const normalizeFileName = (name: string): string => {
-  return (name || '')
-    .toLowerCase()
-    .replace(/ç/g, 'c')
-    .replace(/ğ/g, 'g')
-    .replace(/ı/g, 'i')
-    .replace(/ö/g, 'o')
-    .replace(/ş/g, 's')
-    .replace(/ü/g, 'u')
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]/g, '');
+
+return name
+
+.toLowerCase()
+
+.replace(/ç/g, 'c')
+
+.replace(/ğ/g, 'g')
+
+.replace(/ı/g, 'i')
+
+.replace(/ö/g, 'o')
+
+.replace(/ş/g, 's')
+
+.replace(/ü/g, 'u')
+
+.replace(/\s+/g, '-')
+
+.replace(/[^\w\-]/g, '');
+
 };
+
+
+
+// Görsel yolu çözümleyici
 
 const getImagePath = (product: Product): string => {
-  if (product.image_url?.startsWith('http')) {
-    return product.image_url;
-  }
-  return `/images/${normalizeFileName(product.name)}.jpg`;
+
+if (product.image?.startsWith('http')) {
+
+return product.image;
+
+}
+
+return `/images/${normalizeFileName(product.name)}.jpg`;
+
 };
 
-const ProductDetail: React.FC = () => {
-  const { id } = useParams();
-  const { dispatch } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchProduct = async () => {
-      if (!id) {
-        console.error("❌ URL'den ID alınamadı.");
-        setLoading(false);
-        return;
-      }
 
-      try {
-        const { data, error } = await supabase
-          .from('products')
-          .select('id, name, price, image_url, phone_model, case_type, stock_quantity, rating')
-          .eq('id', id)
-          .single();
+const ProductCard: React.FC<{ product: Product }> = ({ product }) => {
 
-        if (error) throw error;
-        setProduct(data);
-      } catch (err: any) {
-        console.error('🔥 Ürün getirme hatası:', err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+const { dispatch } = useCart();
 
-    fetchProduct();
-  }, [id]);
 
-  const handleAddToCart = () => {
-    if (!product) return;
 
-    dispatch({
-      type: 'ADD_ITEM',
-      payload: {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: getImagePath(product),
-        phoneModel: product.phone_model,
-        caseType: product.case_type,
-      },
-    });
+// ✅ TEST LOG'LARI
 
-    toast.success(`${product.name} sepete eklendi!`);
-  };
+console.log("🧪 Ürün adı:", product.name);
 
-  if (loading)
-    return <div className="text-center p-10 text-gray-500">Yükleniyor...</div>;
+console.log("📦 Stok (ham):", product.stock_quantity);
 
-  if (!product)
-    return <div className="text-center p-10 text-red-500">Ürün bulunamadı.</div>;
+console.log("🔢 Stok (Number):", Number(product.stock_quantity));
 
-  const rating = product.rating ?? 4.5;
 
-  return (
-    <div className="max-w-4xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-        <img
-          src={getImagePath(product)}
-          alt={product.name}
-          className="w-full h-full object-cover"
-        />
-      </div>
 
-      <div>
-        <h1 className="text-3xl font-bold text-metallic-800 mb-2">{product.name}</h1>
-        <p className="text-gray-600 text-sm mb-1">
-          {product.phone_model} • {product.case_type}
-        </p>
+const handleAddToCart = (e: React.MouseEvent) => {
 
-        <div className="flex items-center mb-4">
-          {[...Array(5)].map((_, i) => (
-            <Star
-              key={i}
-              className={`w-5 h-5 ${i < Math.floor(rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
-            />
-          ))}
-          <span className="text-sm text-gray-600 ml-2">({rating})</span>
-        </div>
+e.preventDefault();
 
-        {/* Stok adedi gösterimi buraya eklendi */}
-        {product.stock_quantity > 0 ? (
-          <p className="text-sm text-green-600 mb-2">✅ Stokta {product.stock_quantity} adet var</p>
-        ) : (
-          <p className="text-sm text-red-500 mb-2">❌ Stokta kalmadı</p>
-        )}
+dispatch({
 
-        <p className="text-2xl font-bold text-metallic-800 mb-4">{product.price}₺</p>
+type: 'ADD_ITEM',
 
-        <button
-          onClick={handleAddToCart}
-          className="metallic-button text-white px-6 py-3 rounded-lg text-lg font-medium hover:transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
-          disabled={product.stock_quantity === 0}
-        >
-          <ShoppingCart className="w-5 h-5" />
-          Sepete Ekle
-        </button>
-      </div>
-    </div>
-  );
+payload: {
+
+id: product.id,
+
+name: product.name,
+
+price: product.price,
+
+image: getImagePath(product),
+
+phoneModel: product.phoneModel,
+
+caseType: product.caseType,
+
+},
+
+});
+
 };
 
-export default ProductDetail;
+
+
+const imageFile = getImagePath(product);
+
+
+
+return (
+
+<div className="product-card relative group">
+
+<Link to={`/product/${product.id}`}>
+
+<div className="aspect-square bg-gray-100 rounded-t-lg overflow-hidden">
+
+<img
+
+src={imageFile}
+
+alt={product.name}
+
+className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+
+/>
+
+<div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+</div>
+
+<div className="p-6">
+
+<div className="flex items-center mb-2">
+
+{[...Array(5)].map((_, i) => (
+
+<Star
+
+key={i}
+
+className={`w-4 h-4 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+
+/>
+
+))}
+
+<span className="text-sm text-gray-600 ml-2">({product.rating})</span>
+
+</div>
+
+<h3 className="text-xl font-semibold mb-1 text-metallic-800 group-hover:text-metallic-600 transition-colors">
+
+{product.name}
+
+</h3>
+
+<p className="text-gray-600 text-sm mb-1">{product.phoneModel} • {product.caseType}</p>
+
+
+
+{/* ✅ STOK GÖRÜNÜMÜ */}
+
+{Number(product.stock_quantity) > 0 ? (
+
+<p className="text-sm text-green-600 mb-2">✅ Stokta {product.stock_quantity} adet var</p>
+
+) : (
+
+<p className="text-sm text-red-500 mb-2">❌ Stokta kalmadı</p>
+
+)}
+
+
+
+<div className="flex items-center justify-between">
+
+<span className="text-2xl font-bold text-metallic-800">{product.price}₺</span>
+
+<button
+
+onClick={handleAddToCart}
+
+className="metallic-button text-white px-4 py-2 rounded-lg text-sm font-medium hover:transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+
+disabled={Number(product.stock_quantity) === 0}
+
+>
+
+<ShoppingCart className="w-4 h-4" />
+
+Sepete Ekle
+
+</button>
+
+</div>
+
+</div>
+
+</Link>
+
+</div>
+
+);
+
+};
+
+
+
+export default ProductCard;
+
