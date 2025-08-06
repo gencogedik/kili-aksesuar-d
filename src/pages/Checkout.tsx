@@ -72,7 +72,7 @@ const Checkout = () => {
           user_ip: ip,
           amount: finalAmount,
           user_name: values.fullName,
-          user_basket, // Ham sepet verisini gönder
+          user_basket,
           merchant_oid,
         }),
       });
@@ -89,7 +89,7 @@ const Checkout = () => {
       
       // 2. ADIM: Token alındıktan SONRA siparişi veritabanına kaydet
       const { error: orderError } = await supabase.from('orders').insert([{
-        id: merchant_oid, // PayTR'a gönderdiğimiz merchant_oid'i ID olarak kullanıyoruz
+        id: merchant_oid,
         user_id: user.id,
         order_number: merchant_oid,
         total_amount: finalAmount,
@@ -122,7 +122,6 @@ const Checkout = () => {
     }
   };
 
-  // ... (JSX kısmı aynı kalacak)
   if (loading || (!user && !iframeToken)) return null;
 
   return (
