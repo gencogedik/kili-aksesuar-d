@@ -34,11 +34,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       merchant_id + user_ip + merchant_oid + email + payment_amount +
       user_basket_encoded + '1' + '0' + currency + test_mode;
 
-    // ========================================================================
-    // NİHAİ DÜZELTME: crypto-js ile hash oluşturma
+    // crypto-js ile hash oluşturma
     const hmac = CryptoJS.HmacSHA256(hashStr + merchant_salt, merchant_key);
     const paytr_token = CryptoJS.enc.Base64.stringify(hmac);
-    // ========================================================================
 
     const postData = {
       merchant_id,
