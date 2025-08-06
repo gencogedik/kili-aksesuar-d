@@ -1,57 +1,44 @@
-// /api/create-payment.ts
+// /api/create-payment.cjs
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-import crypto from 'crypto';
-// node-fetch'i CommonJS uyumlu şekilde import ediyoruz
+const crypto = require('crypto');
 const fetch = require('node-fetch');
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // 1. Gelen isteğin POST olduğundan emin ol
+module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
-    return res.status(405).end('Method Not Allowed');
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
   try {
-    // 2. Gerekli verileri ve ortam değişkenlerini al
     const { email, user_ip, amount, user_name, user_basket, merchant_oid } = req.body;
+
+    if (!email || !user_ip || !amount || !user_name || !user_basket || !merchant_oid) {
+      return res.status(400).json({ status: 'error', reason: 'Eksik parametreler.' });
+    }
+
     const merchant_id = process.env.VITE_PAYTR_MERCHANT_ID;
     const merchant_key = process.env.VITE_PAYTR_MERCHANT_KEY;
     const merchant_salt = process.env.VITE_PAYTR_MERCHANT_SALT;
 
-    // 3. Gerekli tüm verilerin mevcut olduğunu kontrol et
     if (!merchant_id || !merchant_key || !merchant_salt) {
-      console.error('Sunucu Hatası: PAYTR ortam değişkenleri eksik.');
+      console.error('❌ Sunucu Hatası: PAYTR ortam değişkenleri bulunamadı!');
       return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
     }
-    if (!email || !user_ip || !amount || !user_name || !user_basket || !merchant_oid) {
-      return res.status(400).json({ status: 'error', reason: 'İstemciden eksik parametre gönderildi.' });
-    }
 
-    // 4. PayTR için gerekli verileri hazırla
-    const payment_amount = Math.round(amount * 100);
     const user_basket_encoded = Buffer.from(JSON.stringify(user_basket)).toString('base64');
-    const test_mode = '0'; // Canlıya geçerken '0' olmalı
+    const payment_amount = Math.round(amount * 100);
     const currency = 'TL';
+    const test_mode = '0';
 
-    // 5. PayTR dokümanına göre HASH oluştur
     const hashStr =
-      merchant_id +
-      user_ip +
-      merchant_oid +
-      email +
-      payment_amount +
-      user_basket_encoded +
-      '1' + // no_installment
-      '0' + // max_installment
-      currency +
-      test_mode;
+      merchant_id + user_ip + merchant_oid + email + payment_amount +
+      user_basket_encoded + '1' + '0' + currency + test_mode;
+
     const paytr_token = crypto
       .createHmac('sha256', merchant_key)
       .update(hashStr + merchant_salt)
       .digest('base64');
 
-    // 6. PayTR'a gönderilecek POST verisini oluştur
     const params = new URLSearchParams();
     params.append('merchant_id', merchant_id);
     params.append('user_ip', user_ip);
@@ -72,7 +59,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     params.append('currency', currency);
     params.append('test_mode', test_mode);
 
-    // 7. node-fetch ile PayTR'a isteği gönder
     const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
       method: 'POST',
       body: params,
@@ -80,7 +66,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const result = await response.json();
 
-    // 8. PayTR'dan gelen yanıta göre istemciye cevap dön
     if (result.status === 'success') {
       return res.status(200).json(result);
     } else {
@@ -88,8 +73,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ status: 'error', reason: `PAYTR Hatası: ${result.reason || 'Bilinmeyen Hata'}` });
     }
 
-  } catch (error: any) {
-    console.error('API Kök Hatası:', error);
+  } catch (error) {
+    console.error('API Kök Hatası:', error.message);
     return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.' });
   }
-}
+};
