@@ -25,12 +25,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
     }
 
-    // ========================================================================
-    // NİHAİ DÜZELTME: Buffer yerine crypto-js'in kendi Base64 fonksiyonunu kullanma
     const user_basket_string = JSON.stringify(user_basket);
     const user_basket_encoded = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(user_basket_string));
-    // ========================================================================
-
+    
     const payment_amount = Math.round(amount * 100);
     const currency = 'TL';
     const test_mode = '0';
