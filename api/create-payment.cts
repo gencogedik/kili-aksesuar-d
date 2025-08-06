@@ -1,10 +1,11 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-const CryptoJS = require('crypto-js');
 
-const handler = async (req: VercelRequest, res: VercelResponse) => {
+import CryptoJS from 'crypto-js';
+import fetch from 'node-fetch';
+
+export default async function handler(req, res) {
   // Set CORS headers to allow requests from your frontend
   // In production, you should restrict this to your actual domain for security
-  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
@@ -16,17 +17,48 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
   // Ensure only POST requests are processed
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST', 'OPTIONS']);
-    // Respond with JSON to be consistent
-    return res.status(405).json({ status: 'error', reason: `Method ${req.method} Not Allowed` });
+    // Verbose error for wrong method
+    return res.status(405).json({
+      status: 'error',
+      error: 'Method Not Allowed',
+      reason: `Method ${req.method} Not Allowed`,
+      hint: 'Lütfen isteğinizi POST olarak gönderin.',
+      verbose: true,
+      timestamp: new Date().toISOString(),
+      requestMethod: req.method
+    });
   }
   
   try {
-    const { email, user_ip, amount, user_name, user_basket, merchant_oid } = req.body;
+    // Verbose: Eksik body veya alanlar için hata-prone kontroller
+    if (!req.body) {
+      throw new Error('İstek gövdesi (body) eksik veya okunamıyor.');
+    }
+    const { email, user_ip, amount, user_name, user_basket, merchant_oid, failTest } = req.body;
+    if (!email || !user_ip || !amount || !user_name || !user_basket || !merchant_oid) {
+      throw new Error('Zorunlu alanlardan biri eksik: email, user_ip, amount, user_name, user_basket, merchant_oid');
+    }
     const { VITE_PAYTR_MERCHANT_ID, VITE_PAYTR_MERCHANT_KEY, VITE_PAYTR_MERCHANT_SALT } = process.env;
 
     if (!VITE_PAYTR_MERCHANT_ID || !VITE_PAYTR_MERCHANT_KEY || !VITE_PAYTR_MERCHANT_SALT) {
       console.error('Sunucu Hatası: PAYTR ortam değişkenleri eksik.');
-      return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
+      return res.status(500).json({
+        status: 'error',
+        error: 'ConfigError',
+        reason: 'Sunucu yapılandırma hatası.',
+        verbose: true,
+        timestamp: new Date().toISOString(),
+        envVars: {
+          VITE_PAYTR_MERCHANT_ID,
+          VITE_PAYTR_MERCHANT_KEY,
+          VITE_PAYTR_MERCHANT_SALT
+        }
+      });
+    }
+
+    // Test amaçlı hata fırlatma
+    if (failTest) {
+      throw new Error('Test amaçlı hata fırlatıldı: failTest alanı true geldi.');
     }
 
     const user_basket_string = JSON.stringify(user_basket);
@@ -69,19 +101,49 @@ const handler = async (req: VercelRequest, res: VercelResponse) => {
       body: postData,
     });
 
-    const result = await response.json();
-
-    if (result.status === 'success') {
-      return res.status(200).json(result);
-    } else {
-      console.error('PAYTR API Hatası:', result);
-      return res.status(400).json({ status: 'error', reason: `PAYTR Hatası: ${result.reason || 'Bilinmeyen Hata'}` });
+    let result;
+    try {
+      result = await response.json();
+    } catch (jsonErr) {
+      // JSON parse hatası
+      return res.status(502).json({
+        status: 'error',
+        error: 'InvalidJSON',
+        reason: 'PAYTR yanıtı JSON olarak ayrıştırılamadı.',
+        verbose: true,
+        raw: await response.text(),
+        stack: jsonErr.stack,
+        timestamp: new Date().toISOString()
+      });
     }
 
-  } catch (error: any) {
-    console.error('API Kök Hatası:', error.message);
-    return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.' });
-  }
-};
+    if (result.status === 'success') {
+      return res.status(200).json({ ...result, verbose: true, timestamp: new Date().toISOString() });
+    } else {
+      console.error('PAYTR API Hatası:', result);
+      return res.status(400).json({
+        status: 'error',
+        error: 'PaytrAPI',
+        reason: `PAYTR Hatası: ${result.reason || 'Bilinmeyen Hata'}`,
+        verbose: true,
+        paytrResult: result,
+        timestamp: new Date().toISOString()
+      });
+    }
 
-module.exports = handler;
+  } catch (error) {
+    // Verbose error response
+    console.error('API Kök Hatası:', error && error.message, error && error.stack);
+    return res.status(500).json({
+      status: 'error',
+      error: error && error.name,
+      reason: error && error.message,
+      stack: error && error.stack,
+      hint: 'Sunucu tarafında beklenmeyen bir hata oluştu. Lütfen logları ve istek formatını kontrol edin.',
+      verbose: true,
+      timestamp: new Date().toISOString(),
+      requestMethod: req.method,
+      requestBody: req.body,
+    });
+  }
+}
