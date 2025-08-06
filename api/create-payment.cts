@@ -30,11 +30,23 @@ export default async function handler(req, res) {
   }
   
   try {
-    // Verbose: Eksik body veya alanlar için hata-prone kontroller
-    if (!req.body) {
-      throw new Error('İstek gövdesi (body) eksik veya okunamıyor.');
+    // Vercel'de req.body bazen undefined olur, bu yüzden manuel olarak oku:
+    let body = req.body;
+    if (!body) {
+      const buffers = [];
+      for await (const chunk of req) {
+        buffers.push(chunk);
+      }
+      const data = Buffer.concat(buffers).toString();
+      try {
+        body = JSON.parse(data);
+      } catch {
+        throw new Error('İstek gövdesi JSON olarak ayrıştırılamadı.');
+      }
     }
-    const { email, user_ip, amount, user_name, user_basket, merchant_oid, failTest } = req.body;
+
+    // Verbose: Eksik body veya alanlar için hata-prone kontroller
+    const { email, user_ip, amount, user_name, user_basket, merchant_oid, failTest } = body;
     if (!email || !user_ip || !amount || !user_name || !user_basket || !merchant_oid) {
       throw new Error('Zorunlu alanlardan biri eksik: email, user_ip, amount, user_name, user_basket, merchant_oid');
     }
@@ -143,7 +155,7 @@ export default async function handler(req, res) {
       verbose: true,
       timestamp: new Date().toISOString(),
       requestMethod: req.method,
-      requestBody: req.body,
+      requestBody: body,
     });
   }
 }
