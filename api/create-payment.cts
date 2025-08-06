@@ -2,11 +2,24 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 const CryptoJS = require('crypto-js');
 
 const handler = async (req: VercelRequest, res: VercelResponse) => {
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', ['POST']);
-    return res.status(405).end('Method Not Allowed');
-  }
+  // Set CORS headers to allow requests from your frontend
+  // In production, you should restrict this to your actual domain for security
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
+  // Handle CORS pre-flight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+  
+  // Ensure only POST requests are processed
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST', 'OPTIONS']);
+    // Respond with JSON to be consistent
+    return res.status(405).json({ status: 'error', reason: `Method ${req.method} Not Allowed` });
+  }
+  
   try {
     const { email, user_ip, amount, user_name, user_basket, merchant_oid } = req.body;
     const { VITE_PAYTR_MERCHANT_ID, VITE_PAYTR_MERCHANT_KEY, VITE_PAYTR_MERCHANT_SALT } = process.env;
