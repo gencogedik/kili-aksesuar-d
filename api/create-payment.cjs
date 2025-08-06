@@ -1,8 +1,9 @@
-// /api/create-payment.cjs
+// /api/create-payment.ts
 
-const crypto = require('crypto');
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import CryptoJS from 'crypto-js';
 
-module.exports = async (req, res) => {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
@@ -24,7 +25,12 @@ module.exports = async (req, res) => {
       return res.status(500).json({ status: 'error', reason: 'Sunucu yapılandırma hatası.' });
     }
 
-    const user_basket_encoded = Buffer.from(JSON.stringify(user_basket)).toString('base64');
+    // ========================================================================
+    // NİHAİ DÜZELTME: Buffer yerine crypto-js'in kendi Base64 fonksiyonunu kullanma
+    const user_basket_string = JSON.stringify(user_basket);
+    const user_basket_encoded = CryptoJS.enc.Base64.stringify(CryptoJS.enc.Utf8.parse(user_basket_string));
+    // ========================================================================
+
     const payment_amount = Math.round(amount * 100);
     const currency = 'TL';
     const test_mode = '0';
@@ -33,10 +39,8 @@ module.exports = async (req, res) => {
       merchant_id + user_ip + merchant_oid + email + payment_amount +
       user_basket_encoded + '1' + '0' + currency + test_mode;
 
-    const paytr_token = crypto
-      .createHmac('sha256', merchant_key)
-      .update(hashStr + merchant_salt)
-      .digest('base64');
+    const hmac = CryptoJS.HmacSHA256(hashStr + merchant_salt, merchant_key);
+    const paytr_token = CryptoJS.enc.Base64.stringify(hmac);
 
     const postData = {
       merchant_id,
@@ -60,6 +64,7 @@ module.exports = async (req, res) => {
     };
 
     const bodyString = Object.keys(postData )
+      // @ts-ignore
       .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(postData[key])}`)
       .join('&');
 
@@ -78,8 +83,8 @@ module.exports = async (req, res) => {
       return res.status(400).json({ status: 'error', reason: `PAYTR Hatası: ${result.reason}` });
     }
 
-  } catch (error) {
-    console.error('API Kök Hatası (/api/create-payment.cjs):', error.message);
+  } catch (error: any) {
+    console.error('API Kök Hatası (/api/create-payment.ts):', error.message);
     return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.', details: error.message });
   }
-};
+}
