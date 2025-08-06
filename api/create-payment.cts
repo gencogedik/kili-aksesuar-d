@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import CryptoJS from 'crypto-js';
+const CryptoJS = require('crypto-js');
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+const handler = async (req: VercelRequest, res: VercelResponse) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', ['POST']);
     return res.status(405).end('Method Not Allowed');
@@ -49,12 +49,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       timeout_limit: '30',
       currency,
       test_mode,
-    } );
+    });
 
     const response = await fetch('https://www.paytr.com/odeme/api/get-token', {
       method: 'POST',
       body: postData,
-    } );
+    });
 
     const result = await response.json();
 
@@ -69,4 +69,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error('API Kök Hatası:', error.message);
     return res.status(500).json({ status: 'error', reason: 'Beklenmedik bir sunucu hatası oluştu.' });
   }
-}
+};
+
+module.exports = handler;
