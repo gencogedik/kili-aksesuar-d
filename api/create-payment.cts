@@ -11,7 +11,12 @@ export default async function handler(req, res) {
 
   // Handle CORS pre-flight OPTIONS request
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    return res.status(200).json({
+      status: 'ok',
+      method: 'OPTIONS',
+      verbose: true,
+      timestamp: new Date().toISOString()
+    });
   }
   
   // Ensure only POST requests are processed
