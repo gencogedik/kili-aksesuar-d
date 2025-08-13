@@ -66,9 +66,9 @@ export default async function handler(req, res) {
         verbose: true,
         timestamp: new Date().toISOString(),
         envVars: {
-          VITE_PAYTR_MERCHANT_ID,
-          VITE_PAYTR_MERCHANT_KEY,
-          VITE_PAYTR_MERCHANT_SALT
+          PAYTR_MERCHANT_ID,
+          PAYTR_MERCHANT_KEY,
+          PAYTR_MERCHANT_SALT
         }
       });
     }
