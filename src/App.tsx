@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+
 import Index from "./pages/Index";
 import PhoneModels from "./pages/PhoneModels";
 import CaseTypes from "./pages/CaseTypes";
@@ -21,7 +22,8 @@ import Admin from "./pages/Admin";
 import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import Orders from "./pages/Orders";
-import OrderSuccess from "./pages/OrderSuccess"; // ✅ Ödeme başarılı sayfası eklendi
+import OrderSuccess from "./pages/OrderSuccess";
+import CrateOpening from "./pages/CrateOpening"; // 🎁 Kasa açma sayfası eklendi
 
 const queryClient = new QueryClient();
 
@@ -47,7 +49,8 @@ const App = () => (
               <Route path="/profile" element={<Profile />} />
               <Route path="/profile/orders" element={<Orders />} />
               <Route path="/admin" element={<Admin />} />
-              <Route path="/siparis-alindi" element={<OrderSuccess />} /> {/* ✅ Yeni sayfa */}
+              <Route path="/siparis-alindi" element={<OrderSuccess />} />
+              <Route path="/crate" element={<CrateOpening />} /> {/* 🎁 Yeni rota eklendi */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
