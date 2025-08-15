@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Package, Sparkles } from 'lucide-react';
-import { useProducts } from '@/hooks/useProducts';
+// import { useProducts } from '@/hooks/useProducts';
 import { Item } from '@/types';
 import { simulateCaseOpening } from '@/utils/caseOpening';
 import { CaseOpeningAnimation } from '@/components/CaseOpeningAnimation';
@@ -15,7 +15,36 @@ export const ShuffleCaseOpening = () => {
   const [winningItem, setWinningItem] = useState<Item | null>(null);
   const [hasOpened, setHasOpened] = useState(false);
   const { addToCart } = useCart();
-  const { products, loading } = useProducts();
+  // Statik ürünler
+  const products = [
+    {
+      id: 1,
+      name: "Kasa 1",
+      description: "Dayanıklı ve şık.",
+      price: 199,
+      image: "https://via.placeholder.com/300x400?text=Kasa+1",
+      compatibility: ["iPhone 13", "Samsung S21"],
+      rarity: "basic"
+    },
+    {
+      id: 2,
+      name: "Kasa 2",
+      description: "Modern tasarım.",
+      price: 249,
+      image: "https://via.placeholder.com/300x400?text=Kasa+2",
+      compatibility: ["iPhone 14", "Samsung S22"],
+      rarity: "rare"
+    },
+    {
+      id: 3,
+      name: "Kasa 3",
+      description: "Ekstra koruma.",
+      price: 299,
+      image: "https://via.placeholder.com/300x400?text=Kasa+3",
+      compatibility: ["iPhone 15", "Samsung S23"],
+      rarity: "epic"
+    }
+  ];
 
   const handleOpenCase = async () => {
     setIsOpening(true);
