@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
-export const useProducts = () => {
+export const useCases = () => {
   return useQuery({
-    queryKey: ["products"],
+    queryKey: ["cases"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("products").select("*");
+      const { data, error } = await supabase.from("cases").select("*");
 
       if (error) throw error;
       return data;
