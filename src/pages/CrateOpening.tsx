@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Package, Sparkles } from 'lucide-react';
-import { singleCase } from '@/data/cases';
+import { useProducts } from '@/hooks/useProducts';
 import { Item } from '@/types';
 import { simulateCaseOpening } from '@/utils/caseOpening';
 import { CaseOpeningAnimation } from '@/components/CaseOpeningAnimation';
@@ -15,6 +15,7 @@ export const ShuffleCaseOpening = () => {
   const [winningItem, setWinningItem] = useState<Item | null>(null);
   const [hasOpened, setHasOpened] = useState(false);
   const { addToCart } = useCart();
+  const { products, loading } = useProducts();
 
   const handleOpenCase = async () => {
     setIsOpening(true);
@@ -22,7 +23,7 @@ export const ShuffleCaseOpening = () => {
     setWinningItem(null);
 
     try {
-      const result = await simulateCaseOpening(singleCase.items);
+  const result = await simulateCaseOpening(products);
       setWinningItem(result);
       
       // Add item to cart
@@ -95,20 +96,20 @@ export const ShuffleCaseOpening = () => {
             <Card className="overflow-hidden shadow-case">
               <div className="aspect-[3/4] relative">
                 <img 
-                  src={singleCase.image} 
-                  alt={singleCase.name}
+                  src={products[0]?.image || ""} 
+                  alt={products[0]?.name || ""}
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6 text-left">
                   <h1 className="text-2xl font-bold text-white mb-3">
-                    {singleCase.name}
+                    {products[0]?.name}
                   </h1>
                   <p className="text-white/90 mb-4 text-sm">
-                    {singleCase.description}
+                    {products[0]?.description}
                   </p>
                   <span className="text-white font-bold text-xl bg-primary/20 px-3 py-1 rounded">
-                    ₺{singleCase.price}
+                    ₺{products[0]?.price}
                   </span>
                 </div>
               </div>
@@ -122,18 +123,18 @@ export const ShuffleCaseOpening = () => {
               className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-lg px-12 py-6 gap-3 shadow-md hover:shadow-lg transition-all duration-300"
             >
               <Package className="h-6 w-6" />
-              Kutuyu Aç - ₺{singleCase.price}
+              Kutuyu Aç - ₺{products[0]?.price}
             </Button>
           )}
         </div>
 
         {/* Case Opening Animation */}
-        <CaseOpeningAnimation
-          items={singleCase.items}
-          winningItem={winningItem}
-          isOpening={isOpening}
-          onComplete={handleAnimationComplete}
-        />
+          <CaseOpeningAnimation
+            items={products}
+            winningItem={winningItem}
+            isOpening={isOpening}
+            onComplete={handleAnimationComplete}
+          />
 
         {/* Open Another Button */}
         {hasOpened && winningItem && (
@@ -155,7 +156,7 @@ export const ShuffleCaseOpening = () => {
           <div className="mt-16">
             <h2 className="text-2xl font-bold mb-8 text-center">Kazanabileceğiniz Ürünler</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {singleCase.items.slice(0, 8).map((item) => (
+              {products.slice(0, 8).map((item) => (
                 <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
                   <div className="aspect-[3/4] relative">
                     <img 

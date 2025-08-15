@@ -23,7 +23,7 @@ import Checkout from "./pages/Checkout";
 import NotFound from "./pages/NotFound";
 import Orders from "./pages/Orders";
 import OrderSuccess from "./pages/OrderSuccess";
-import CrateOpening from "./pages/CrateOpening"; // 🎁 Kasa açma sayfası eklendi
+import { ShuffleCaseOpening } from "./pages/CrateOpening"; // 🎁 Kasa açma sayfası eklendi
 
 const queryClient = new QueryClient();
 
@@ -50,7 +50,7 @@ const App = () => (
               <Route path="/profile/orders" element={<Orders />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/siparis-alindi" element={<OrderSuccess />} />
-              <Route path="/crate" element={<CrateOpening />} /> {/* 🎁 Yeni rota eklendi */}
+              <Route path="/crate" element={<ShuffleCaseOpening />} /> {/* 🎁 Yeni rota eklendi */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
